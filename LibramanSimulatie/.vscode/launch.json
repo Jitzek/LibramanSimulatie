@@ -1,0 +1,20 @@
+{
+    "configurations": [
+        {
+            "type": "java",
+            "name": "CodeLens (Launch) - App",
+            "request": "launch",
+            "mainClass": "com.nhlstenden.amazonsimulatie.base.App",
+            "projectName": "AmazonSimulatie"
+        },
+        {
+            "name": "Launch index.html",
+            "type": "firefox",
+            "request": "launch",
+            "reAttach": true,
+            "file": "${workspaceFolder}/src/main/resources/static/index.html",
+            "url": "http://localhost:8080",
+            "webRoot": "${workspaceFolder}"
+        }
+    ]
+}
