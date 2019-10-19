@@ -1,6 +1,7 @@
 package com.nhlstenden.amazonsimulatie.models;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 
@@ -37,6 +38,8 @@ class Robot extends Obstacle implements Object3D, Updatable {
 
     private Item currentItem;
     private Item reservedItem;
+
+    private int pathProgress = 0;
 
     private List<List<String>> allPaths = new ArrayList<>();
     private List<String> finalPath = new ArrayList<>();
@@ -75,69 +78,92 @@ class Robot extends Obstacle implements Object3D, Updatable {
         this.rotationY = getRotationY();
         this.rotationZ = getRotationZ();
         defineTarget();
+        displayCurrentGoal();
         pathFinding();
         return true;
     }
 
+    private void displayCurrentGoal() {
+        if (finalPath == null || finalPath.size() == 0) {
+            System.out.println(fg_cyan + currentGoal + color_reset);
+        }
+    }
+
     private void defineTarget() {
-        // If Robot has an Item
-        if (currentItem != null) {
-            // If the Truck is emptying
-            if (world.getTruck().isEmptying()) {
-                // If the Robot already knew it should be emptying
-                if (emptyTruck) {
-                    // Deliver Item to Truck
-                    setTarget(world.getTruck());
-                }
-                // Else the Robot needs to deliver it's Item first
-                else {
-                    for (Rack rack : world.getRacks()) {
-                        if (currentItem.getCategory().equals(rack.getCategory())) {
-                            setTarget(rack);
+        if (finalPath == null || finalPath.size() == 0) {
+            // If there is no Truck
+            if (world.getTruck() == null) {
+                targetTruck = null;
+                return;
+            }
+            // If Robot has an Item
+            if (currentItem != null) {
+                // If the Truck is emptying
+                if (world.getTruck().isEmptying()) {
+                    // If the Robot already knew it should be emptying
+                    if (emptyTruck) {
+                        // Deliver Item to Rack
+                        for (Rack rack : world.getRacks()) {
+                            if (currentItem.getCategory().equals(rack.getCategory())) {
+                                setTarget(rack);
+                                break;
+                            }
                         }
+                        currentGoal = "Emptying Truck: Delivering Item to Rack";
                     }
+                    // Else the Robot is still refilling needs to deliver it's Item first
+                    else {
+                        setTarget(world.getTruck());
+                        currentGoal = "Refilling Truck: Delivering Item to Truck";
+                        emptyTruck = true;
+                        refillTruck = false;
+                    }
+                }
+                else if (world.getTruck().isRefilling()) {
+                    // If the Robot already knew it should be refilling
+                    if (refillTruck) {
+                        // Deliver Item to Truck
+                        setTarget(world.getTruck());
+                        currentGoal = "Refilling Truck: Delivering Item to Truck";
+                    }
+                    // Else the Robot is still emptying and needs to deliver it's Item first
+                    else {
+                        for (Rack rack : world.getRacks()) {
+                            if (currentItem.getCategory().equals(rack.getCategory())) {
+                                setTarget(rack);
+                                break;
+                            }
+                        }
+                        currentGoal = "Emptying Truck: Delivering Item to Rack";
+                        emptyTruck = false;
+                        refillTruck = true;
+                    }
+                }
+            }
+            // If Robot doesn't have an Item
+            else if (currentItem == null) {
+                // If the Truck is emptying
+                if (world.getTruck().isEmptying()) {
+                    setTarget(world.getTruck());
+                    currentGoal = "Emptying Truck: Getting Item from Truck";
                     emptyTruck = true;
                     refillTruck = false;
                 }
-            }
-            else if (world.getTruck().isRefilling()) {
-                // If the Robot already knew it should be refilling
-                if (refillTruck) {
-                    // Deliver Item to Truck
-                    setTarget(world.getTruck());
-                }
-                // Else the Robot needs to deliver it's  Item first
-                else {
-                    for (Rack rack : world.getRacks()) {
-                        if (currentItem.getCategory().equals(rack.getCategory())) {
-                            setTarget(rack);
-                        }
-                    }
-                    emptyTruck = false;
-                    refillTruck = true;
-                }
-            }
-        }
-        // If Robot doesn't have an Item
-        else if (currentItem == null) {
-            // If the Truck is emptying
-            if (world.getTruck().isEmptying()) {
-                setTarget(world.getTruck());
-                emptyTruck = true;
-                refillTruck = false;
-            }
-            else if (world.getTruck().isRefilling()) {
-                for (Item item : world.getTruck().getRequiredItems()) {
-                    if (!item.isReserved() || item.getReserver() == this) {
-                        for (Rack rack : world.getRacks()) {
-                            if (item.getCategory().equals(rack.getCategory())) {
-                                setTarget(rack);
+                else if (world.getTruck().isRefilling()) {
+                    for (Item item : world.getTruck().getRequiredItems()) {
+                        if (!item.isReserved() || item.getReserver() == this) {
+                            for (Rack rack : world.getRacks()) {
+                                if (item.getCategory().equals(rack.getCategory())) {
+                                    setTarget(rack);
+                                    break;
+                                }
                             }
                         }
                     }
+                    currentGoal = "Refilling Truck: Getting Item from Rack";
+                    emptyTruck = false;
+                    refillTruck = true;
                 }
-                emptyTruck = false;
-                refillTruck = true;
             }
         }
     }
@@ -243,7 +269,8 @@ class Robot extends Obstacle implements Object3D, Updatable {
                 collision = collisionDetection(getX(), getY(), getZ(), object_x_coordinate_span_min,
                         object_x_coordinate_span_max, object_z_coordinate_span_min, object_z_coordinate_span_max);
                 if (collision) {
-                    System.out.println("!!!Collision Detected!!!");
+                    System.out.println(bg_red + "!!!Collision Detected!!!");
+                    System.out.println(color_reset);
                     // What should happen on collision with a rack or truck?
                 }
             }
@@ -256,7 +283,6 @@ class Robot extends Obstacle implements Object3D, Updatable {
                 // If the Robot has a Rack as target
                 if (targetRack != null) {
                     // Needs to deliver to Rack
-                    currentGoal = "Deliver Item to Rack";
                     // If the path has not been defined
                     if (!(finalPath.size() > 0)) {
                         appendPathFindData(targetRack.getX(), targetRack.getY(), targetRack.getZ(), 
@@ -267,67 +293,119 @@ class Robot extends Obstacle implements Object3D, Updatable {
                     else {
                         if (updatePathPosition()) {
                             // Robot has Reached Destination
-                            System.out.println("Reached Destination");
+                            System.out.println(bg_green + fg_black + "Reached Destination: Rack");
+                            System.out.println(color_reset);
                             // Robot has delivered item, as such he has lost his current item
                             currentItem = null;
                             targetRack = null;
                         }
                     }
                     return true;
-                } else if (targetTruck != null) {
-                   // Needs to deliver to Truck
-                   currentGoal = "Deliver Item to Truck";
+                }
+                // Else if the Robot has the Truck as target 
+                else if (targetTruck != null) {
+                    // Needs to deliver to Truck
+                    // If the path has not been defined
+                    if (!(finalPath.size() > 0)) {
+                        appendPathFindData(targetTruck.getX(), targetTruck.getY(), targetTruck.getZ(), 
+                                    targetTruck.getSizeX(), targetTruck.getSizeY(), targetTruck.getSizeZ(), 
+                                    types, coordinates, sizes);
+                    }
+                    // Else update the position of the robot according to the path 
+                    else {
+                        if (updatePathPosition()) {
+                            // Robot has Reached Destination
+                            System.out.println(bg_green + fg_black + "Reached Destination: Truck");
+                            System.out.println(color_reset);
+                            // Reequired Item is delivered
+                            targetTruck.removeRequiredItem(currentItem);
+                            // Robot has delivered item, as such he has lost his current item
+                            currentItem = null;
+                            targetTruck = null;
+                        }
+                    }
+                    return true;
                 }
             }
             // Robot doesn't have Item
             else {
+                // Needs to get Item from Truck
                 if (targetTruck != null) {
-                    // Needs to get Item from Truck
-                    currentGoal = "Get Item from Truck";
-                    // If the truck targeted has items
-                    if (targetTruck.getItems().size() > 0) {
-                        for (Item item : targetTruck.getItems()) {
-                            // If the item is not reserved by another robot
-                            if (!item.isReserved() || item.getReserver() == this) {
-                                // Reserve this item
-                                item.reserveItem(this);
-                                // Item is reserved but is not yet in the posession of the robot
-                                reservedItem = item;
-                                // If the path has not yet been defined
-                                if (!(finalPath.size() > 0)) {
-                                    appendPathFindData(targetTruck.getX(), targetTruck.getY(), targetTruck.getZ(), 
-                                                targetTruck.getSizeX(), targetTruck.getSizeY(), targetTruck.getSizeZ(), 
-                                                types, coordinates, sizes);
-                                }
-                                // Else if the path has been defined 
-                                else {
-                                    // Update robot position
-                                    if (updatePathPosition()) {
-                                        // Robot has Reached Destination
-                                        System.out.println("Reached Destination");
-                                        // If the Item is still available
-                                        if (reservedItem != null) {
-                                            // The reserved is now in posession of the robot
-                                            currentItem = reservedItem;
-                                            // The item taken has been removed from the truck
-                                            targetTruck.removeItem(currentItem);
-                                        }
-                                        // The item isn't available anymore
-                                        else {
-                                            // Look for new Item 
-                                        }
-                                        // The truck isn't the robot's target anymore
-                                        targetTruck = null;
+                    // If the path has not yet been defined
+                    if (!(finalPath.size() > 0)) {
+                        if (reservedItem == null) {
+                            // If the truck targeted has items
+                            if (targetTruck.getItems().size() > 0) {
+                                for (Item item : targetTruck.getItems()) {
+                                    // If the item is not reserved by another robot
+                                    if (!item.isReserved() || item.getReserver() == this) {
+                                        // Reserve this item
+                                        item.reserveItem(this);
+                                        // Item is reserved but is not yet in the posession of the robot
+                                        reservedItem = item;
+                                        appendPathFindData(targetTruck.getX(), targetTruck.getY(), targetTruck.getZ(), 
+                                                    targetTruck.getSizeX(), targetTruck.getSizeY(), targetTruck.getSizeZ(), 
+                                                    types, coordinates, sizes);
                                         break;
                                     }
                                 }
-                                return true;
                             }
                         }
                     }
-                } else if (targetRack != null) {
-                    // Needs to get Item from Scaffolding
-                    currentGoal = "Get Item from Scaffolding";
+                    // Else if the path has been defined 
+                    else {
+                        // Update Robot position
+                        if (updatePathPosition()) {
+                            // Robot has Reached Destination
+                            System.out.println(bg_green + fg_black + "Reached Destination: Truck");
+                            System.out.println(color_reset);
+                            // The reserved Item is now in posession of the Robot
+                            currentItem = reservedItem;
+                            reservedItem = null;
+                            // The Item taken has been removed from the Truck
+                            targetTruck.removeItem(currentItem);
+                            // The Truck isn't the Robot's target anymore
+                            targetTruck = null;
+                        }
+                    }
+                    return true;
+                } 
+                // Needs to get Item from Rack
+                else if (targetRack != null) {
+                    // Path has not been defined
+                    if (!(finalPath.size() > 0)) {
+                        // Get Required Item
+                        for (Item item : world.getTruck().getRequiredItems()) {
+                            // If the Item category and the Rack category match
+                            if (item.getCategory().equals(targetRack.getCategory())) {
+                                // If the Item isn't reserved by another Robot
+                                if (!item.isReserved() || item.getReserver() == this) {
+                                    // Reserve this Item
+                                    item.reserveItem(this);
+                                    reservedItem = item;
+                                    appendPathFindData(targetRack.getX(), targetRack.getY(), targetRack.getZ(), 
+                                                    targetRack.getSizeX(), targetRack.getSizeY(), targetRack.getSizeZ(), 
+                                                    types, coordinates, sizes);
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                    // Else if the Path has been defined
+                    else {
+                        // Update Robot position
+                        if (updatePathPosition()) {
+                            // Robot has Reached Destination
+                            System.out.println(bg_green + fg_black + "Reached Destination: Rack");
+                            System.out.println(color_reset);
+                            // The reserved Item is now in posession of the Robot
+                            currentItem = reservedItem;
+                            reservedItem = null;
+                            // The Rack isn't the Robot's target anymore
+                            targetRack = null;
+                        }
+                    }
+                    return true;
                 }
             }
         }
@@ -436,9 +514,9 @@ class Robot extends Obstacle implements Object3D, Updatable {
      * @return - True (Robot has reached it's destination) - False (Robot has not yet reached it's destination)
      */
     private boolean updatePathPosition() {
-        String action = finalPath.get(0);
-        System.out.println(finalPath.size() + " " + action);
-        switch (finalPath.get(0)) {
+        //String action = finalPath.get(0);
+        //System.out.println(finalPath.size() + " " + action);
+        switch (finalPath.get(pathProgress)) {
             case "x+":
                 setX(x + speed);
                 break;
@@ -452,15 +530,20 @@ class Robot extends Obstacle implements Object3D, Updatable {
                 setZ(z - speed);
                 break;
             case "finish": 
+                printProgress(finalPath.size(), pathProgress + 1);
+                pathProgress = 0;
                 finalPath.clear();
                 allPaths.clear();
                 backupPath.clear();
+                System.out.println("\r");
                 // Done
                 return true;
             }
+            printProgress(finalPath.size(), pathProgress + 1);
+            pathProgress++;
             try {
-                backupPath.add(finalPath.get(0));
-                finalPath.remove(0);
+                backupPath.add(finalPath.get(pathProgress));
+                //finalPath.remove(0);
             } catch (IndexOutOfBoundsException e) {
 
             }
@@ -791,10 +874,10 @@ class Robot extends Obstacle implements Object3D, Updatable {
                 }
             }
             if (reachedDestination) {
-                System.out.println("finished");
+                //System.out.println("finished");
                 currentPath.add("finish");
                 allPaths.add(currentPath);
-                System.out.println(allPaths.size());
+                //System.out.println(allPaths.size());
                 finishedCalc = true;
             }
             //System.out.println(count + " " + currentPath.get(count));
@@ -976,4 +1059,41 @@ class Robot extends Obstacle implements Object3D, Updatable {
         }
         return choices;
     }
+
+    private static void printProgress(long total, long current) {
+        StringBuilder string = new StringBuilder(140);   
+        int percent = (int) (current * 100 / total);
+        string
+            .append('\r')
+            .append(String.join("", Collections.nCopies(percent == 0 ? 2 : 2 - (int) (Math.log10(percent)), " ")))
+            .append(String.format(" %d%% [", percent))
+            .append(String.join("", Collections.nCopies(percent, "=")))
+            .append('>')
+            .append(String.join("", Collections.nCopies(100 - percent, " ")))
+            .append(']')
+            //.append(String.join("", Collections.nCopies((int) (Math.log10(total)) - (int) (Math.log10(current)), " ")))
+            .append(String.format(" %d/%d", current, total));
+
+        System.out.print(string);
+    }
+
+    private static final String color_reset = "\u001B[0m";
+
+    private static final String fg_black = "\u001B[30m";
+    private static final String fg_red = "\u001B[31m";
+    private static final String fg_green = "\u001B[32m";
+    private static final String fg_yellow = "\u001B[33m";
+    private static final String fg_blue = "\u001B[34m";
+    private static final String fg_purple = "\u001B[35m";
+    private static final String fg_cyan = "\u001B[36m";
+    private static final String fg_white = "\u001B[37m";
+
+    private static final String bg_black = "\u001B[40m";
+    private static final String bg_red = "\u001B[41m";
+    private static final String bg_green = "\u001B[42m";
+    private static final String bg_yellow = "\u001B[43m";
+    private static final String bg_blue = "\u001B[44m";
+    private static final String bg_purple = "\u001B[45m";
+    private static final String bg_cyan = "\u001B[46m";
+    private static final String bg_white = "\u001B[47m";
 }

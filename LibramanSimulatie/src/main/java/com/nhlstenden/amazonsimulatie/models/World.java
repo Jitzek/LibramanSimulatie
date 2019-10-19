@@ -60,23 +60,40 @@ public class World implements Model {
         truck.addItem(new Item("Electronics", "Laptop"));
         truck.addItem(new Item("Video Games", "Hello Kitty Island Adventure"));
         /// ---------------
-
-        /// Creatin Robot
+        Rack rack1 = new Rack("Electronics", scaffoldingSize[0], scaffoldingSize[1], scaffoldingSize[2], 10, 0, 10, 0,
+                0, 0);
+        Rack rack2 = new Rack("Books", scaffoldingSize[0], scaffoldingSize[1], scaffoldingSize[2], 17, 0, 10, 0, 0, 0);
+        Rack rack3 = new Rack("Video Games", scaffoldingSize[0], scaffoldingSize[1], scaffoldingSize[2], 24, 0, 10, 0,
+                0, 0);
+        Rack rack4 = new Rack("Sports", scaffoldingSize[0], scaffoldingSize[1], scaffoldingSize[2], 10, 0, 22, 0, 0, 0);
+        Rack rack5 = new Rack("Fashion", scaffoldingSize[0], scaffoldingSize[1], scaffoldingSize[2], 17, 0, 22, 0, 0,
+                0);
+        Rack rack6 = new Rack("Pet Supplies", scaffoldingSize[0], scaffoldingSize[1], scaffoldingSize[2], 24, 0, 22, 0,
+                0, 0);
         Robot robot1 = new Robot(this, robotSize[0], robotSize[1], robotSize[2], 9, 0, 0, 0, 0, 0);
-        /// --------------
-
-        /// Creating Rack
-        Rack rack1 = new Rack("Electronics", scaffoldingSize[0], scaffoldingSize[1], scaffoldingSize[2], 10, 0, 10, 0, 0, 0);
-        /// --------------
-
         this.worldObjects.add(this.truck);
         this.worldObjects.add(robot1);
         this.worldObjects.add(rack1);
+        this.worldObjects.add(rack2);
+        this.worldObjects.add(rack3);
+        this.worldObjects.add(rack4);
+        this.worldObjects.add(rack5);
+        this.worldObjects.add(rack6);
 
         // obstacles.add(truck);
         obstacles.add(rack1);
+        obstacles.add(rack2);
+        obstacles.add(rack3);
+        obstacles.add(rack4);
+        obstacles.add(rack5);
+        obstacles.add(rack6);
         obstacles.add(robot1);
         racks.add(rack1);
+        racks.add(rack2);
+        racks.add(rack3);
+        racks.add(rack4);
+        racks.add(rack5);
+        racks.add(rack6);
         robots.add(robot1);
     }
 
@@ -94,60 +111,16 @@ public class World implements Model {
 
     @Override
     public void update() {
-        // If the Truck's item list reaches 0
-        if (truck.getItems() == null || truck.getItems().size() == 0) {
-            truck.setIsEmptying(false);
-            truck.setIsRefilling(true);
-        }
-
-        for (Robot robot : robots) {
-            // If the Robot has a Truck as target
-            if (robot.getTargetTruck() != null && robot.getTargetRack() == null) {
-
-            } 
-            // If the Robot has a Rack as target
-            else if (robot.getTargetTruck() == null && robot.getTargetRack() != null) {
-
+        if (truck != null) {
+            // If the Truck's item list reaches 0
+            if (truck.getItems() == null || truck.getItems().size() == 0) {
+                truck.setIsEmptying(false);
+                truck.setIsRefilling(true);
             }
-            // If the Robot doesn't have a target
-            else if (robot.getTargetTruck() == null && robot.getTargetRack() == null) {
-                // If the Robot has an Item
-                if (robot.getItem() != null) {
-                    // If the Truck is emptying
-                    if (truck.isEmptying()) {
-                        // Find a Rack to deliver to
-                        for (Rack rack : racks) {
-                            // If the Category of the Item corresponds to the Category of the Rack
-                            if (robot.getItem().getCategory().equals(rack.getCategory())) {
-                                // Deliver the Item to the Rack
-                                robot.setTarget(rack);
-                            }
-                        }
-                    }
-                    // If the Truck is refilling
-                    else if (truck.isRefilling()) {
-                        // Get an Item from the Truck
-                        robot.setTarget(truck);
-                    }
-                }
-                // If the Robot doesn't have an Item
-                else if (robot.getItem() == null) {
-                    // If the Truck is emptying
-                    if (truck.isEmptying()) {
-                        // Get an Item from the Truck
-                        robot.setTarget(truck);
-                    }
-                    // If the Truck is refilling
-                    else if (truck.isRefilling()) {
-                        // Find a Rack to get an Item from
-                        for (Rack rack : racks) {
-                            if (robot.getItem().getCategory().equals(rack.getCategory())) {
-                                // Get an Item from the Rack
-                                robot.setTarget(rack);
-                            }
-                        }
-                    }
-                }
+            // If Truck is done emptying and refilling
+            if (truck.isRefilling() && (truck.getRequiredItems() == null || truck.getRequiredItems().size() == 0)) {
+                // Remove Truck
+                this.truck = null;
             }
         }
 
