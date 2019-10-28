@@ -67,6 +67,11 @@ class Item implements Object3D, Updatable {
     public boolean isReserved() {
         return isReserved;
     }
+
+    public String getProduct() {
+        return this.product;
+    }
+
     public String getCategory() {
         return category;
     }
