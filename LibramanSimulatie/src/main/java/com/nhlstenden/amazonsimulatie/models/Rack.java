@@ -19,14 +19,32 @@ class Rack extends Obstacle implements Object3D, Updatable {
     private double rotationY = 0;
     private double rotationZ = 0;
 
+    private List<double[]> loadingAreas = new ArrayList<>();
+
     private String category;
 
     private List<Item> items = new ArrayList<Item>();
 
-    public Rack(String category, double sizeX, double sizeY, double sizeZ, double x, double y, double z, double rotationX, double rotationY, double rotationZ) {
+    public Rack(double sizeX, double sizeY, double sizeZ, double x, double y, double z, double rotationX, double rotationY, double rotationZ) {
         super(sizeX, sizeY, sizeZ, x, y, z, rotationX, rotationY, rotationZ);
         this.uuid = UUID.randomUUID();
-        this.category = category;
+        defineLoadingAreas();
+    }
+
+    /**
+     * Defines the areas where the Robots can load and unload Items (left and right of Rack)
+     */
+    private void defineLoadingAreas() {
+        double[] loadAreaLeft = new double[3];
+        loadAreaLeft[0] = getX() - (getSizeX()/2) - 1;
+        loadAreaLeft[1] = getY();
+        loadAreaLeft[2] = getZ();
+        double[] loadAreaRight = new double[3];
+        loadAreaRight[0] = getX() + (getSizeX()/2) + 1;
+        loadAreaRight[1] = getY();
+        loadAreaRight[2] = getZ();
+        loadingAreas.add(loadAreaLeft);
+        loadingAreas.add(loadAreaRight);
     }
 
     @Override
@@ -46,6 +64,10 @@ class Rack extends Obstacle implements Object3D, Updatable {
         return this.items;
     }
 
+    public void setCategory(String category) {
+        this.category = category;
+    }
+    
     public String getCategory() {
         return category;
     }
@@ -58,5 +80,8 @@ class Rack extends Obstacle implements Object3D, Updatable {
         return Rack.class.getSimpleName().toLowerCase();
     }
 
-    
+    public List<double[]> getLoadingAreas() {
+        return this.loadingAreas;
+    }
+
 }

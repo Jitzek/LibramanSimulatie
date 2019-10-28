@@ -1,6 +1,8 @@
 package com.nhlstenden.amazonsimulatie.models;
 
-class Obstacle {
+import java.util.UUID;
+
+class Obstacle implements Object3D {
     private double sizeX;
     private double sizeY;
     private double sizeZ;
@@ -13,7 +15,10 @@ class Obstacle {
     private double rotationY = 0;
     private double rotationZ = 0;
 
+    private UUID uuid;
+
     public Obstacle(double sizeX, double sizeY, double sizeZ, double x, double y, double z, double rotationX, double rotationY, double rotationZ) {
+        this.uuid = UUID.randomUUID();
         this.sizeX= sizeX;
         this.sizeY = sizeY;
         this.sizeZ = sizeZ;
@@ -82,5 +87,15 @@ class Obstacle {
     }
     public double getRotationZ() {
         return rotationZ;
+    }
+
+    @Override
+    public String getUUID() {
+        return this.uuid.toString();
+    }
+
+    @Override
+    public String getType() {
+        return Obstacle.class.getSimpleName().toLowerCase();
     }
 }
