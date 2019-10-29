@@ -1,6 +1,7 @@
 package com.nhlstenden.amazonsimulatie.models;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Random;
 import java.util.UUID;
@@ -56,8 +57,6 @@ class Robot extends Obstacle implements Object3D, Updatable {
     private Item currentItem;
     private Item reservedItem;
 
-<<<<<<< Updated upstream
-=======
     private int pathProgress = 0;
     private int actionProgress = 0;
     private int actionLimit = 150; // Amount of frames before taking or giving item from/to object has finished
@@ -68,7 +67,6 @@ class Robot extends Obstacle implements Object3D, Updatable {
     List<double[]> obstacleRotations = new ArrayList<>();
     List<double[]> obstacleSizes = new ArrayList<>();
 
->>>>>>> Stashed changes
     private List<List<String>> allPaths = new ArrayList<>();
     private List<String> finalPath = new ArrayList<>();
     private List<String> backupPath = new ArrayList<>();
@@ -107,28 +105,6 @@ class Robot extends Obstacle implements Object3D, Updatable {
         this.rotationY = getRotationY();
         this.rotationZ = getRotationZ();
         defineTarget();
-<<<<<<< Updated upstream
-        pathFinding();
-        return true;
-    }
-
-    private void defineTarget() {
-        // If Robot has an Item
-        if (currentItem != null) {
-            // If the Truck is emptying
-            if (world.getTruck().isEmptying()) {
-                // If the Robot already knew it should be emptying
-                if (emptyTruck) {
-                    // Deliver Item to Truck
-                    setTarget(world.getTruck());
-                }
-                // Else the Robot needs to deliver it's Item first
-                else {
-                    for (Rack rack : world.getRacks()) {
-                        if (currentItem.getCategory().equals(rack.getCategory())) {
-                            setTarget(rack);
-                        }
-=======
         if (displayGoal) {
             displayCurrentGoal();
         }
@@ -251,29 +227,9 @@ class Robot extends Obstacle implements Object3D, Updatable {
                         currentGoal = "Emptying Truck: Delivering Item to Rack";
                         emptyTruck = false;
                         refillTruck = true;
->>>>>>> Stashed changes
                     }
-                    emptyTruck = true;
-                    refillTruck = false;
                 }
             }
-<<<<<<< Updated upstream
-            else if (world.getTruck().isRefilling()) {
-                // If the Robot already knew it should be refilling
-                if (refillTruck) {
-                    // Deliver Item to Truck
-                    setTarget(world.getTruck());
-                }
-                // Else the Robot needs to deliver it's  Item first
-                else {
-                    for (Rack rack : world.getRacks()) {
-                        if (currentItem.getCategory().equals(rack.getCategory())) {
-                            setTarget(rack);
-                        }
-                    }
-                    emptyTruck = false;
-                    refillTruck = true;
-=======
             // If Robot doesn't have an Item
             else if (currentItem == null) {
                 // If the Truck is emptying
@@ -339,32 +295,9 @@ class Robot extends Obstacle implements Object3D, Updatable {
                         refillTruck = true;
                     }
                     
->>>>>>> Stashed changes
                 }
             }
             displayGoal = true;
-        }
-        // If Robot doesn't have an Item
-        else if (currentItem == null) {
-            // If the Truck is emptying
-            if (world.getTruck().isEmptying()) {
-                setTarget(world.getTruck());
-                emptyTruck = true;
-                refillTruck = false;
-            }
-            else if (world.getTruck().isRefilling()) {
-                for (Item item : world.getTruck().getRequiredItems()) {
-                    if (!item.isReserved() || item.getReserver() == this) {
-                        for (Rack rack : world.getRacks()) {
-                            if (item.getCategory().equals(rack.getCategory())) {
-                                setTarget(rack);
-                            }
-                        }
-                    }
-                }
-                emptyTruck = false;
-                refillTruck = true;
-            }
         }
     }
 
@@ -572,10 +505,6 @@ class Robot extends Obstacle implements Object3D, Updatable {
             if (type.equals("rack") || type.equals("truck")) {
                 // What should happen when colliding with Rack or Truck
                 if (collision) {
-<<<<<<< Updated upstream
-                    System.out.println("!!!Collision Detected!!!");
-                    // What should happen on collision with a rack or truck?
-=======
                     System.out.println(bg_red + fg_black + "Rack or Truck Collision" + color_reset);
                     String prevAction = backupPath.get(backupPath.size() - 1);
                     switch (prevAction) {
@@ -593,41 +522,10 @@ class Robot extends Obstacle implements Object3D, Updatable {
                             break;
                     }
                     break;
->>>>>>> Stashed changes
                 }
             }
             i++;
         }
-<<<<<<< Updated upstream
-        // If the robot is not colliding with an obstacle
-        if (!collision) {
-            // Robot has Item
-            if (currentItem != null) {
-                // If the Robot has a Rack as target
-                if (targetRack != null) {
-                    // Needs to deliver to Rack
-                    currentGoal = "Deliver Item to Rack";
-                    // If the path has not been defined
-                    if (!(finalPath.size() > 0)) {
-                        appendPathFindData(targetRack.getX(), targetRack.getY(), targetRack.getZ(), 
-                                        targetRack.getSizeX(), targetRack.getSizeY(), targetRack.getSizeZ(), 
-                                        types, coordinates, sizes);
-                    }
-                    // Else update the position of the robot according to the path 
-                    else {
-                        if (updatePathPosition()) {
-                            // Robot has Reached Destination
-                            System.out.println("Reached Destination");
-                            // Robot has delivered item, as such he has lost his current item
-                            currentItem = null;
-                            targetRack = null;
-                        }
-                    }
-                    return true;
-                } else if (targetTruck != null) {
-                   // Needs to deliver to Truck
-                   currentGoal = "Deliver Item to Truck";
-=======
         // Robot has Item
         if (currentItem != null) {
             isGetting = false;
@@ -661,61 +559,9 @@ class Robot extends Obstacle implements Object3D, Updatable {
                         currentItem = null;
                         targetRack = null;
                     }
->>>>>>> Stashed changes
                 }
                 return true;
             }
-<<<<<<< Updated upstream
-            // Robot doesn't have Item
-            else {
-                if (targetTruck != null) {
-                    // Needs to get Item from Truck
-                    currentGoal = "Get Item from Truck";
-                    // If the truck targeted has items
-                    if (targetTruck.getItems().size() > 0) {
-                        for (Item item : targetTruck.getItems()) {
-                            // If the item is not reserved by another robot
-                            if (!item.isReserved() || item.getReserver() == this) {
-                                // Reserve this item
-                                item.reserveItem(this);
-                                // Item is reserved but is not yet in the posession of the robot
-                                reservedItem = item;
-                                // If the path has not yet been defined
-                                if (!(finalPath.size() > 0)) {
-                                    appendPathFindData(targetTruck.getX(), targetTruck.getY(), targetTruck.getZ(), 
-                                                targetTruck.getSizeX(), targetTruck.getSizeY(), targetTruck.getSizeZ(), 
-                                                types, coordinates, sizes);
-                                }
-                                // Else if the path has been defined 
-                                else {
-                                    // Update robot position
-                                    if (updatePathPosition()) {
-                                        // Robot has Reached Destination
-                                        System.out.println("Reached Destination");
-                                        // If the Item is still available
-                                        if (reservedItem != null) {
-                                            // The reserved is now in posession of the robot
-                                            currentItem = reservedItem;
-                                            // The item taken has been removed from the truck
-                                            targetTruck.removeItem(currentItem);
-                                        }
-                                        // The item isn't available anymore
-                                        else {
-                                            // Look for new Item 
-                                        }
-                                        // The truck isn't the robot's target anymore
-                                        targetTruck = null;
-                                        break;
-                                    }
-                                }
-                                return true;
-                            }
-                        }
-                    }
-                } else if (targetRack != null) {
-                    // Needs to get Item from Scaffolding
-                    currentGoal = "Get Item from Scaffolding";
-=======
             // Else if the Robot has the Truck as target 
             else if (targetTruck != null) {
                 // Needs to deliver to Truck
@@ -858,7 +704,6 @@ class Robot extends Obstacle implements Object3D, Updatable {
                                     obstacleTypes, obstacleCoordinates, obstacleSizes);
                 } else {
                     updatePathPosition();
->>>>>>> Stashed changes
                 }
             }
         }
@@ -1774,34 +1619,6 @@ class Robot extends Obstacle implements Object3D, Updatable {
      * @return - True (Robot has reached it's destination) - False (Robot has not yet reached it's destination)
      */
     private boolean updatePathPosition() {
-<<<<<<< Updated upstream
-        String action = finalPath.get(0);
-        System.out.println(finalPath.size() + " " + action);
-        switch (finalPath.get(0)) {
-            case "x+":
-                setX(x + speed);
-                break;
-            case "x-":
-                setX(x - speed);
-                break;
-            case "z+":
-                setZ(z + speed);
-                break;
-            case "z-":
-                setZ(z - speed);
-                break;
-            case "finish": 
-                finalPath.clear();
-                allPaths.clear();
-                backupPath.clear();
-                // Done
-                return true;
-            }
-            try {
-                backupPath.add(finalPath.get(0));
-                finalPath.remove(0);
-            } catch (IndexOutOfBoundsException e) {
-=======
         //String action = finalPath.get(0);
         //System.out.println(finalPath.size() + " " + action);
         if (finishedPath) {
@@ -1871,7 +1688,6 @@ class Robot extends Obstacle implements Object3D, Updatable {
                         backupPath.add(finalPath.get(pathProgress));
                         //finalPath.remove(0);
                     } catch (IndexOutOfBoundsException e) {
->>>>>>> Stashed changes
 
                     }
                 }
@@ -2622,10 +2438,10 @@ class Robot extends Obstacle implements Object3D, Updatable {
                 }
             }
             if (reachedDestination) {
-                System.out.println("finished");
+                //System.out.println("finished");
                 currentPath.add("finish");
                 allPaths.add(currentPath);
-                System.out.println(allPaths.size());
+                //System.out.println(allPaths.size());
                 finishedCalc = true;
             }
             //System.out.println(count + " " + currentPath.get(count));
@@ -2807,8 +2623,6 @@ class Robot extends Obstacle implements Object3D, Updatable {
         }
         return choices;
     }
-<<<<<<< Updated upstream
-=======
 
     private static void printProgress(long total, long current) {
         StringBuilder string = new StringBuilder(140);   
@@ -2846,5 +2660,4 @@ class Robot extends Obstacle implements Object3D, Updatable {
     private static final String bg_purple = "\u001B[45m";
     private static final String bg_cyan = "\u001B[46m";
     private static final String bg_white = "\u001B[47m";
->>>>>>> Stashed changes
 }
