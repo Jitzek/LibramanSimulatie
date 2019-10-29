@@ -17,11 +17,11 @@ import org.springframework.web.socket.WebSocketSession;
  * waarmee de view class kan communiceren met de browser.
  */
 public class DefaultWebSocketView implements View {
-    private WebSocketSession sesion;
+    private WebSocketSession session;
     private Command onClose;
 
-    public DefaultWebSocketView(WebSocketSession sesion) {
-        this.sesion = sesion;
+    public DefaultWebSocketView(WebSocketSession session) {
+        this.session = session;
     }
 
     /*
@@ -32,19 +32,19 @@ public class DefaultWebSocketView implements View {
      */
     @Override
     public void update(String event, Object3D data) {
-        try {
-            if(this.sesion.isOpen()) {
-                this.sesion.sendMessage(new TextMessage("{"
-                + surroundString("command") + ": " + surroundString(event) + ","
-                + surroundString("parameters") + ": " + jsonifyObject3D(data)
-              + "}"));
-            }
-            else {
+        synchronized (session) {
+            try {
+                if (this.session.isOpen()) {
+                    this.session
+                            .sendMessage(new TextMessage("{" + surroundString("command") + ": " + surroundString(event)
+                                    + "," + surroundString("parameters") + ": " + jsonifyObject3D(data) + "}"));
+                } else {
+                    this.onClose.execute();
+                }
+
+            } catch (IOException e) {
                 this.onClose.execute();
             }
-            
-        } catch (IOException e) {
-            this.onClose.execute();
         }
     }
 
@@ -54,20 +54,15 @@ public class DefaultWebSocketView implements View {
     }
 
     /*
-     * Deze methode maakt van een Object3D object een JSON pakketje om verstuurd te worden
-     * naar de client.
+     * Deze methode maakt van een Object3D object een JSON pakketje om verstuurd te
+     * worden naar de client.
      */
     private String jsonifyObject3D(Object3D object) {
-        return  "{" 
-                + surroundString("uuid") + ":" + surroundString(object.getUUID()) + ","
-                + surroundString("type") + ":" + surroundString(object.getType()) + ","
-                + surroundString("x") + ":" + object.getX() + ","
-                + surroundString("y") + ":" + object.getY() + ","
-                + surroundString("z") + ":" + object.getZ() + ","
-                + surroundString("rotationX") + ":" + object.getRotationX() + ","
-                + surroundString("rotationY") + ":" + object.getRotationY() + ","
-                + surroundString("rotationZ") + ":" + object.getRotationZ()
-              + "}";
+        return "{" + surroundString("uuid") + ":" + surroundString(object.getUUID()) + "," + surroundString("type")
+                + ":" + surroundString(object.getType()) + "," + surroundString("x") + ":" + object.getX() + ","
+                + surroundString("y") + ":" + object.getY() + "," + surroundString("z") + ":" + object.getZ() + ","
+                + surroundString("rotationX") + ":" + object.getRotationX() + "," + surroundString("rotationY") + ":"
+                + object.getRotationY() + "," + surroundString("rotationZ") + ":" + object.getRotationZ() + "}";
     }
 
     private String surroundString(String s) {
