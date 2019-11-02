@@ -14,6 +14,10 @@ public interface Object3D {
     public abstract double getX();
     public abstract double getY();
     public abstract double getZ();
+
+    public abstract double getSizeX();
+    public abstract double getSizeY();
+    public abstract double getSizeZ();
     
     public abstract double getRotationX();
     public abstract double getRotationY();

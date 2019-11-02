@@ -62,5 +62,23 @@ public class ProxyObject3D implements Object3D {
         return this.object.getRotationZ();
     }
 
+    @Override
+    public double getSizeX() {
+        return this.object.getSizeX();
+    }
+
+    @Override
+    public double getSizeY() {
+        return this.object.getSizeY();
+    }
+
+    @Override
+    public double getSizeZ() {
+        return this.object.getSizeZ();
+    }
+
+    public Object3D getObject() {
+        return this.object;
+    }
 
 }
