@@ -19,22 +19,28 @@ public class World implements Model {
     private List<Rack> racks;
     private List<Robot> robots;
 
-    private static double[] truckSize = { 3.0, 2.5, 2.0 };
-    private static double[] rackSize = { 1.2, 5.0, 3.5 };
+    Random random = new Random();
+
+    private static double[] truckSize = { 8.7, 5.0, 3.5 };
+    private static double[] rackSize = { 1.2, 5.0, 4.0 };
     private static double[] robotSize = { 0.9, 0.3, 0.9 };
+
+    // Coordinates where Objects should be deleted, setting an Object's x, y and z to these coordinates will delete their model
+    private static double[] dump = {-1000, -1000, -1000};
 
     private static String[] Electronica = { "Electronica", "Vlex On Virtual Assistant™",
             "Vlex On Privacy Concerning Home Security™", "Micromax MucBuk Prü",
             "Hello Kitty Professional Dj Headphones", "Vlex On GetLost™", "OnePlus Tea" };
     private static String[] Movies = { "Movies", "Birdemic IMAX 3D", "Airplane Mode", "Shrek 3",
-            "Bee Movie but every time they say \"bee\" the movie gets 30% faster", "Monthy Python and The Holy Grail" };
+            "Bee Movie but every time they say \"bee\" the movie gets 300% faster",
+            "Monthy Python and The Holy Grail" };
     private static String[] PetSupplies = { "Pet Supplies", "Spiked Hamster Ball", "Chocolate Dog Treats",
             "Chinese Cook Book" };
     private static String[] Baby = { "Baby", "Electric Toilet Seat for Potty Training (Belts & Batteries included)",
             "Meth", "Glock 26 Gen 4 (9MM)" };
-    private static String[] VideoGames = { "Video Games", "Hello Kitty Island Adventure GOTY", "Fallout 76 (99% OFF)",
-            "Soulja Boy Game Console", "Garfield Go Kart" };
-    private static String[] Books = { "Books", "Hello Kitty Islan Adventure Complete Lore",
+    private static String[] VideoGames = { "Video Games", "Hello Kitty Island Adventure GOTY",
+            "Fallout 76 (Math.abs(-99)% OFF)", "Soulja Boy Game Console", "Garfield Go Kart" };
+    private static String[] Books = { "Books", "Hello Kitty Island Adventure Complete Lore",
             "How to tie a noose, and other fun party tricks", "De complete professional" };
     private static String[][] categories = { Electronica, Movies, PetSupplies, Baby, VideoGames, Books };
 
@@ -66,24 +72,53 @@ public class World implements Model {
         this.racks = new ArrayList<>();
         this.robots = new ArrayList<>();
 
-        // World, sizeX, sizeY, sizeZ, X, Y, Z, rotationX, rotationY, rotationZ
-
-        /// Creating Truck
-        /// ---------------
-        /*
-         * Rack rack1 = new Rack(rackSize[0], rackSize[1], rackSize[2], 10, 0, 10, 0, 0,
-         * 0); Rack rack2 = new Rack(rackSize[0], rackSize[1], rackSize[2], 16, 0, 10,
-         * 0, 0, 0); Rack rack3 = new Rack(rackSize[0], rackSize[1], rackSize[2], 22, 0,
-         * 10, 0, 0, 0); Rack rack4 = new Rack(rackSize[0], rackSize[1], rackSize[2],
-         * 10, 0, 22, 0, 0, 0); Rack rack5 = new Rack(rackSize[0], rackSize[1],
-         * rackSize[2], 16, 0, 22, 0, 0, 0); Rack rack6 = new Rack(rackSize[0],
-         * rackSize[1], rackSize[2], 22, 0, 22, 0, 0, 0);
-         * 
-         * rack1.setCategory("Electronics"); rack2.setCategory("Books");
-         * rack3.setCategory("Video Games"); rack4.setCategory("Sports");
-         * rack5.setCategory("Fashion"); rack6.setCategory("Pet Supplies");
-         */
         addRacks();
+
+        // Filling Racks
+        for (Rack rack : racks) {
+            for (int i = 0; i < categories.length; i++) {
+                if (categories[i][0].equals(rack.getCategory())) {
+                    double x = rack.getX();
+                    double y = rack.getY();
+                    double z = rack.getZ();
+                    int count = 0;
+                    double resetz = z;
+                    int indexCount = 0;
+                    for (int j = random.nextInt(3); j < 3; j++) {
+                        String product = categories[i][random.nextInt(categories[i].length - 1) + 1];
+                        Item item = new Item(categories[i][0], product, indexCount);
+                        for (int k = indexCount; k < rack.getIndexes().length; k++) {
+                            if (rack.getIndexes()[k] == 0) {
+                                item.setX(x);
+                                item.setY(y);
+                                item.setZ(z + 0.8);
+                                rack.addItem(item, indexCount);
+                                item.setRack(rack);
+                                worldObjects.add(item);
+                                break;
+                            } else {
+                                z -= 1;
+                                count++;
+                                if (count == 3) {
+                                    count = 0;
+                                    y += 0.9;
+                                    z = resetz;
+                                }
+                                indexCount++;
+                            }
+                        }
+                        z -= 1;
+                        count++;
+                        if (count == 3) {
+                            count = 0;
+                            y += 0.9;
+                            z = resetz;
+                        }
+                        indexCount++;
+                    }
+                }
+            }
+        }
 
         double[] idleStation1_coordinates = new double[3];
         idleStation1_coordinates[0] = 12;
@@ -96,28 +131,13 @@ public class World implements Model {
 
         Robot robot1 = new Robot(this, idleStation1_coordinates, robotSize[0], robotSize[1], robotSize[2], 12, 0, 12, 0,
                 0, 0);
-        Robot robot2 = new Robot(this, idleStation2_coordinates, robotSize[0], robotSize[1], robotSize[2], 12, 0, -12, 0,
-                0, 0);
-
+        Robot robot2 = new Robot(this, idleStation2_coordinates, robotSize[0], robotSize[1], robotSize[2], 12, 0, -12,
+                0, 0, 0);
+        
         this.worldObjects.add(robot1);
         this.worldObjects.add(robot2);
-        /*
-         * this.worldObjects.add(rack1); this.worldObjects.add(rack2);
-         * this.worldObjects.add(rack3); this.worldObjects.add(rack4);
-         * this.worldObjects.add(rack5); this.worldObjects.add(rack6);
-         */
-
-        // obstacles.add(truck);
-        /*
-         * obstacles.add(rack1); obstacles.add(rack2); obstacles.add(rack3);
-         * obstacles.add(rack4); obstacles.add(rack5); obstacles.add(rack6);
-         */
         obstacles.add(robot1);
         obstacles.add(robot2);
-        /*
-         * racks.add(rack1); racks.add(rack2); racks.add(rack3); racks.add(rack4);
-         * racks.add(rack5); racks.add(rack6);
-         */
         robots.add(robot1);
         robots.add(robot2);
     }
@@ -139,19 +159,75 @@ public class World implements Model {
         // If Truck exists
         if (truck != null) {
             // If the Truck's item list reaches 0
-            if (truck.getItems() == null || truck.getItems().size() == 0) {
+            if (truck.isEmptying() && (truck.getItems() == null || truck.getItems().size() == 0)) {
                 truck.setIsEmptying(false);
                 truck.setIsRefilling(true);
             }
             // If Truck has left
-            if (truck.hasLeft()) {
-                // Remove Truck
+            if (this.truck.hasLeft()) {
+                this.truck.setX(dump[0]);
+                this.truck.setY(dump[1]);
+                this.truck.setZ(dump[2]);
+                for (Item item : this.truck.getItems()) {
+                    item.setX(dump[0]);
+                    item.setY(dump[1]);
+                    item.setZ(dump[2]);
+                }
+                obstacles.remove(this.truck);
                 this.truck = null;
             }
         }
         // Else create Truck
         else {
-            this.truck = new Truck(categories, truckSize[0], truckSize[1], truckSize[2], 17, 0, -1, 0, 0, 0);
+            this.truck = new Truck(truckSize[0], truckSize[1], truckSize[2], 18, -0.15, -0.25, 0, 0, 0);
+            List<Item> truckItemList = this.truck.createRandomItemList(categories);
+            for (Item item : truckItemList) {
+                item.setX(this.truck.getX());
+                item.setY(this.truck.getY());
+                item.setZ(this.truck.getZ());
+                this.truck.addItem(item);
+                worldObjects.add(item);
+            }
+            for (Rack rack : racks) {
+                if (this.truck.getRequiredItems().size() >= this.truck.getItemListSize()) {
+                    break;
+                }
+                if (rack.getItems().size() > 0) {
+                    for (Item item : rack.getItems()) {
+                        if (random.nextInt(3) == 1) {
+                            this.truck.addRequiredItem(item);
+                            this.worldObjects.add(item);
+                            break;
+                        }
+                    }
+                }
+            }
+            if (!(truck.getRequiredItems().size() > 2)) {
+                int count = 0;
+                for (Rack rack : racks) {
+                    if (count == 2) {
+                        break;
+                    }
+                    if (rack.getItems().size() > 0) {
+                        for (Item item : rack.getItems()) {
+                            boolean exists = false;
+                            for (Item item1 : this.truck.getRequiredItems()) {
+                                if (item1 == item) {
+                                    exists = true;
+                                    break;
+                                }
+                            }
+                            if (!exists) {
+                                this.truck.addRequiredItem(item);
+                                this.worldObjects.add(item);
+                                break;
+                            }
+                            
+                        }
+                    }
+                    count++;
+                }
+            }
             obstacles.add(this.truck);
             this.worldObjects.add(this.truck);
         }
@@ -216,7 +292,7 @@ public class World implements Model {
                             0, 0, 0);
                     obstacles.add(obstacle);
                     this.worldObjects.add(obstacle);
-                    z += 7;
+                    z += 8.5;
                     counterz = 0;
                     categoryIndex++;
                 } else {
