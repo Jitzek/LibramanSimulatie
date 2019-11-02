@@ -123,23 +123,35 @@ public class World implements Model {
         double[] idleStation1_coordinates = new double[3];
         idleStation1_coordinates[0] = 12;
         idleStation1_coordinates[1] = 0;
-        idleStation1_coordinates[2] = 12;
+        idleStation1_coordinates[2] = 14;
         double[] idleStation2_coordinates = new double[3];
         idleStation2_coordinates[0] = 12;
         idleStation2_coordinates[1] = 0;
-        idleStation2_coordinates[2] = -12;
+        idleStation2_coordinates[2] = -14;
+        double[] idleStation3_coordinates = new double[3];
+        idleStation3_coordinates[0] = 0;
+        idleStation3_coordinates[1] = 0;
+        idleStation3_coordinates[2] = 14;
 
         Robot robot1 = new Robot(this, idleStation1_coordinates, robotSize[0], robotSize[1], robotSize[2], 12, 0, 12, 0,
                 0, 0);
         Robot robot2 = new Robot(this, idleStation2_coordinates, robotSize[0], robotSize[1], robotSize[2], 12, 0, -12,
                 0, 0, 0);
+        Robot robot3 = new Robot(this, idleStation3_coordinates, robotSize[0], robotSize[1], robotSize[2], 0, 0, -12,
+                0, 0, 0);
         
         this.worldObjects.add(robot1);
-        this.worldObjects.add(robot2);
         obstacles.add(robot1);
-        obstacles.add(robot2);
         robots.add(robot1);
+
+        this.worldObjects.add(robot2);
+        obstacles.add(robot2);
         robots.add(robot2);
+
+        /*this.worldObjects.add(robot3);
+        obstacles.add(robot3);
+        robots.add(robot3);*/
+
     }
 
     /*
