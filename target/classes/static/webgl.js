@@ -17,6 +17,7 @@ window.onload = function () {
   var xracks = Math.floor((planewidth - 2) / 5);
   var zracks = Math.floor((planeheight - 5) / 4);
   var toRobot;
+  let models = [];
   console.log(xracks);
   console.log(zracks);
 
@@ -64,7 +65,7 @@ window.onload = function () {
 
         for (let i = 0; i < 5; i++) {
           for (let i = 0; i < 3; i++) {
-            box(x, y, z + 0.4);
+            //box(x, y, z + 0.4);
             z -= 1;
           }
           y += 0.9;
@@ -86,15 +87,19 @@ window.onload = function () {
     );
   }
   //box needs an x y and z value, this function is uses in rack, but could also be used for other stuff if needed
-  function box(x, y, z) {
+  function box(x, y, z, uuid) {
     loader.load(
-      "models/doos.gltf",
+      "models/doazespiegelt.gltf",
       function (gltf) {
         gltf.scene.scale.set(1, 1, 1);
         gltf.scene.position.x = x;
         gltf.scene.position.y = y;
         gltf.scene.position.z = z;
-        scene.add(gltf.scene);
+        const root = gltf.scene
+        root.uuid = uuid;
+        root.scale.y = -1;
+        models.push(root.getObjectByName('Scene'));
+        scene.add(root);
 
         gltf.animations; // Array<THREE.AnimationClip>
         gltf.scene; // THREE.Scene
@@ -107,6 +112,26 @@ window.onload = function () {
       },
       function (error) {
         //console.log("error");
+      }
+    );
+  }
+  function truck(x, y, z, uuid) {
+    loader.load("models/truck.gltf",
+      function (gltf) {
+        gltf.scene.scale.set(0.07, 0.07, 0.07);
+        gltf.scene.position.x = x;
+        gltf.scene.position.y = y;
+        gltf.scene.position.z = z;
+        const root = gltf.scene
+        root.uuid = uuid;
+        models.push(root.getObjectByName('Scene'));
+        scene.add(root);
+      },
+      function (xhr) {
+
+      },
+      function (error) {
+
       }
     );
   }
@@ -130,7 +155,7 @@ window.onload = function () {
       }
       counter++;
       if (counter == 3) {
-        z += 7;
+        z += 8.5;
         counter = 0;
       } else {
         z += 3.5;
@@ -351,7 +376,7 @@ window.onload = function () {
         if (command.parameters.type == "rack") {
           var x = 1.2; // X size
           var y = 5.0; // Y size
-          var z = 3.5; // Z size
+          var z = 4.0; // Z size
           var geometry = new THREE.BoxGeometry(x, y, z);
           var material = new THREE.MeshBasicMaterial({ color: 0x99ff00 });
           material.transparent = true;
@@ -366,12 +391,37 @@ window.onload = function () {
           worldObjects[command.parameters.uuid] = group;
         }
         if (command.parameters.type == "truck") {
-          var geometry = new THREE.BoxGeometry(3.0, 2.5, 2.0);
+          var sizeX = 8.7; var sizeY = 5.0; var sizeZ = 3.5;
+          var geometry = new THREE.BoxGeometry(sizeX, sizeY, sizeZ);
           var material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
+          material.transparent = true;
+          material.opacity = 0.2;
+          var group = new THREE.Group();
+          group.name = "truck";
+
+          var collisionBox = new THREE.Mesh(geometry, material);
+          collisionBox.position.y = sizeY / 2;
+          truck(command.parameters.x, command.parameters.y, command.parameters.z, command.parameters.uuid);
+          group.add(collisionBox);
+
+          scene.add(group);
+          worldObjects[command.parameters.uuid] = group;
+        }
+        if (command.parameters.type == "item") {
+          var x = 1.2; // X size
+          var y = 0.75; // Y size
+          var z = 0.75; // Z size
+          var geometry = new THREE.BoxGeometry(x, y, z);
+          var material = new THREE.MeshBasicMaterial({ color: 0x0080ff });
+          material.transparent = true;
+          material.opacity = 0.9;
           var group = new THREE.Group();
 
-          var rack = new THREE.Mesh(geometry, material);
-          group.add(rack);
+          var item = new THREE.Mesh(geometry, material);
+          group.add(item);
+
+          box(command.parameters.x, command.parameters.y, (command.parameters.z - z / 2), command.parameters.uuid);
+          item.position.y = y / 2;
 
           scene.add(group);
           worldObjects[command.parameters.uuid] = group;
@@ -398,9 +448,38 @@ window.onload = function () {
       object.position.y = command.parameters.y;
       object.position.z = command.parameters.z;
 
+      if (models) {
+        for (const model of models) {
+          if (model.uuid === command.parameters.uuid) {
+            model.position.x = command.parameters.x;
+            model.position.y = command.parameters.y;
+            model.position.z = command.parameters.z;
+
+            model.rotation.x = command.parameters.rotationX;
+            model.rotation.y = command.parameters.rotationY;
+            model.rotation.z = command.parameters.rotationZ;
+          }
+        }
+      }
+
       object.rotation.x = command.parameters.rotationX;
       object.rotation.y = command.parameters.rotationY;
       object.rotation.z = command.parameters.rotationZ;
+
+
+      // If the positions of an object equal the positions defined in World.java (dump[])
+      if (object.position.x == -1000 && object.position.y == -1000 && object.position.z == -1000) {
+        // Delete Object
+        scene.remove(object);
+        if (models) {
+          for (const model of models) {
+            if (model.uuid === command.parameters.uuid) {
+              // Remove model
+              scene.remove(model);
+            }
+          }
+        }
+      }
 
       /**
        * function to move the camera to the robot
