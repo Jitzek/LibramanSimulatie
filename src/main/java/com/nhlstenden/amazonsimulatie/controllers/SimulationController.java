@@ -35,7 +35,7 @@ public class SimulationController extends Controller {
             try {
                 //TimeUnit.MICROSECONDS.sleep(16667);
                 //Thread.sleep(17);
-                TimeUnit.MICROSECONDS.sleep(3667);
+                TimeUnit.MICROSECONDS.sleep(1667);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
