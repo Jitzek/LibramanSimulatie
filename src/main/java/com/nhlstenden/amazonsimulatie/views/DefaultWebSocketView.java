@@ -36,12 +36,13 @@ public class DefaultWebSocketView implements View {
      * de views is. Op elke view wordt dan de update methode aangroepen, welke een
      * JSON pakketje maakt van de informatie die verstuurd moet worden. Deze JSON
      * wordt naar de browser verstuurd, welke de informatie weer afhandeld.
+     * 
+     * robots now have an action, which will be used for the cameras to follow the robot
      */
     @Override
     public void update(String event, Object3D data) {
         synchronized (session) {
             try {
-
                 if (data.getType().toString().trim().equals("robot")) {
                     if (!robotuuids.contains(data.getUUID())) {
                         robotuuids.add(data.getUUID());
@@ -100,6 +101,8 @@ public class DefaultWebSocketView implements View {
     /*
      * Deze methode maakt van een Object3D object een JSON pakketje om verstuurd te
      * worden naar de client.
+     * when robot, action is included
+     * also added sizes to the objects
      */
     private String jsonifyObject3D(Object3D object) {
         if (object.getType().toString().trim().equals("robot")) {
