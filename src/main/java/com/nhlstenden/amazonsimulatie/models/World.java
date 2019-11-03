@@ -13,19 +13,22 @@ import java.util.Random;
  * in het model. Dit betekent dus de logica die het magazijn simuleert.
  */
 public class World implements Model {
-    // {x, y, z}
+    // Obstacles can't collide with eachother, removing Objects from this list will also remove their collision functionality
     private List<Obstacle> obstacles;
+
     private Truck truck;
     private List<Rack> racks;
     private List<Robot> robots;
 
     Random random = new Random();
-
+    
+    // {x, y, z}
     private static double[] truckSize = { 8.7, 5.0, 3.5 };
     private static double[] rackSize = { 1.2, 5.0, 4.0 };
     private static double[] robotSize = { 0.9, 0.3, 0.9 };
 
     // Coordinates where Objects should be deleted, setting an Object's x, y and z to these coordinates will delete their model
+    // Don't forget to change the clients values when altering these
     private static double[] dump = {-1000, -1000, -1000};
 
     private static String[] Electronica = { "Electronica", "Vlex On Virtual Assistant™",
@@ -148,6 +151,8 @@ public class World implements Model {
         obstacles.add(robot2);
         robots.add(robot2);
 
+        // Removing the comments will add a third Robot to the simulation
+        // Although not thoroughly tested it should hold up
         /*this.worldObjects.add(robot3);
         obstacles.add(robot3);
         robots.add(robot3);*/
@@ -275,21 +280,18 @@ public class World implements Model {
             for (int i = 0; i < zracks; i++) {
                 if (x <= 12.4 && z <= 11.4) {
                     Rack rack1 = new Rack(rackSize[0], rackSize[1], rackSize[2], x, 0, z, 0, 0, 0);
-                    // Rack rack2 = new Rack(rackSize[0], rackSize[1], rackSize[2], x + 1.5, 0, z,
-                    // 0, 0, 0);
                     racks.add(rack1);
                     this.worldObjects.add(rack1);
-                    // racks.add(rack2);
-                    // this.worldObjects.add(rack2);
-                    // obstacles.add(rack2);
+                    // Assigns a random category to each three Racks (each row of Racks)
                     if (categoryIndex > categories.length - 1) {
-                        // Random
                         if (prevIndex != categoryIndex || prevIndex == 0) {
                             prevIndex = categoryIndex;
                             randomIndex = random.nextInt(categories.length - 1);
                         }
                         rack1.setCategory(categories[randomIndex][0]);
-                    } else {
+                    }
+                    // Ensures that each category is used atleast once 
+                    else {
                         rack1.setCategory(categories[categoryIndex][0]);
                     }
                 }
@@ -300,6 +302,8 @@ public class World implements Model {
                     obstacleZ = z;
                 }
                 if (counterz == 3) {
+                    // Gives each three Racks one big collision box (for simplifying obstacle logic)
+                    // However this adds the collision for this Rack as the type Obstacle
                     Obstacle obstacle = new Obstacle(rackSize[0], rackSize[1], rackSize[2] * 3, obstacleX, 0, obstacleZ,
                             0, 0, 0);
                     obstacles.add(obstacle);
