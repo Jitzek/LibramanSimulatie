@@ -27,8 +27,9 @@ window.onload = function() {
    * adds sound to the robot
    * @param {camera thats in the scene} camera
    * count is there so there is just one instance of the sound
-   * Refdistance for volume decrease over distance
+   * Refdistance for volume increase/decrease over distance
    * returns sound to the robot
+   * sound used is made and edited by us
    */
   function robotSound(camera) {
     var listener = new THREE.AudioListener();
@@ -38,8 +39,8 @@ window.onload = function() {
     var count = 0;
     audioLoader.load("sounds/untitled.ogg", function(buffer) {
       sound.setBuffer(buffer);
-      sound.setRefDistance(0.3);
-      sound.setVolume(1); //don't go over a value of 10, just don't do it
+      sound.setRefDistance(0.1);
+      sound.setVolume(0.3);
       sound.setLoop(true);
       if (count == 0) {
         sound.play();
@@ -49,22 +50,30 @@ window.onload = function() {
     return sound;
   }
 
+  /**
+   * loader for files with the gltf format
+   */
   var loader = new THREE.GLTFLoader();
+
+  /**
+   * function that can be used to spawn in racks
+   * you can choose to put the rack already filled with boxes, just uncomment the box()
+   * @param {rack position x} x
+   * @param {rack position y} y
+   * @param {rack position z} z
+   * box x and y should be the same as the x and y of the rack, z needs some tweaking
+   * model can be scaled by using scale.set()
+   */
   function rack(x, y, z) {
     loader.load(
-      "models/rackding.gltf", //load the model you want to use
+      "models/rackding.gltf",
       function(gltf) {
-        gltf.scene.scale.set(0.023, 0.023, 0.023); //if model is to big or too small, change this value
+        gltf.scene.scale.set(0.023, 0.023, 0.023);
         gltf.scene.position.x = x;
         gltf.scene.position.y = y;
         gltf.scene.position.z = z;
         scene.add(gltf.scene);
         var reset = z;
-        //loops to put boxes on each rack
-        //width rack = 1.2
-        //width doublerack + path = 2.4 + 2.4 = 4.8
-        //height rack = 3.5
-
         for (let i = 0; i < 5; i++) {
           for (let i = 0; i < 3; i++) {
             //box(x, y, z + 0.4);
@@ -73,12 +82,6 @@ window.onload = function() {
           y += 0.9;
           z = reset;
         }
-
-        gltf.animations; // Array<THREE.AnimationClip>
-        gltf.scene; // THREE.Scene
-        gltf.scenes; // Array<THREE.Scene>
-        gltf.cameras; // Array<THREE.Camera>
-        gltf.asset; // Object
       },
       function(xhr) {
         //console.log((xhr.loaded / xhr.total) * 100 + "% loaded");
@@ -88,7 +91,15 @@ window.onload = function() {
       }
     );
   }
-  //box needs an x y and z value, this function is uses in rack, but could also be used for other stuff if needed
+  /**
+   * function to spawn in boxes
+   * @param {box position x} x
+   * @param {box position y} y
+   * @param {box position z} z
+   * @param {uuid of said box} uuid
+   * scale the model with scale.set()
+   * models get pushed to an array for animating them later on
+   */
   function box(x, y, z, uuid) {
     loader.load(
       "models/doazespiegelt.gltf",
@@ -102,12 +113,6 @@ window.onload = function() {
         root.scale.y = -1;
         models.push(root.getObjectByName("Scene"));
         scene.add(root);
-
-        gltf.animations; // Array<THREE.AnimationClip>
-        gltf.scene; // THREE.Scene
-        gltf.scenes; // Array<THREE.Scene>
-        gltf.cameras; // Array<THREE.Camera>
-        gltf.asset; // Object
       },
       function(xhr) {
         //console.log((xhr.loaded / xhr.total) * 100 + "% loaded");
@@ -117,6 +122,15 @@ window.onload = function() {
       }
     );
   }
+  /**
+   * fucntion to spawn in a truck
+   * @param {truck position x} x
+   * @param {truck position y} y
+   * @param {truck position z} z
+   * @param {uuid of the truck} uuid
+   * scale the model with scale.set()
+   * models get pushed to an array for animating them later on
+   */
   function truck(x, y, z, uuid) {
     loader.load(
       "models/libratruck.gltf",
@@ -138,8 +152,12 @@ window.onload = function() {
   }
 
   /**
-   * spawns in filled racks
-   * see world.java.addRacks() for more info
+   * spawns in racks to the scene
+   * when the palnesizes are changed, the total racks also changes to fit the field
+   * when the counter is 3 a big hallway will be created
+   * the rack() thats commeted out can be use to spawn in a rack right next to the other rack
+   * the robots tend to have problems with hitboxes that are right next to each other
+   * so it's not encouraged to enable this
    */
   function spawn() {
     var z = bottomcornery;
@@ -176,13 +194,14 @@ window.onload = function() {
     camera.position.z = -15;
     camera.position.y = 5;
     camera.position.x = 25;
-    //keeps the camera up
     camera.up = new THREE.Vector3(0, 1, 0);
 
     cameraControls.update();
     scene = new THREE.Scene();
 
-    renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer = new THREE.WebGLRenderer({
+      antialias: true
+    });
     renderer.physicallyCorrectLights = true;
     renderer.autoClearColor = false;
     renderer.setPixelRatio(window.devicePixelRatio);
@@ -190,6 +209,11 @@ window.onload = function() {
     document.body.appendChild(renderer.domElement);
     window.addEventListener("resize", onWindowResize, false);
 
+    /**
+     * geometry for the floor
+     * geometry2 and geometry3 for the walls
+     * geometry4 for a poster
+     */
     var geometry = new THREE.PlaneGeometry(planewidth, planeheight);
     var geometry2 = new THREE.PlaneGeometry(planewidth, 10);
     var geometry3 = new THREE.PlaneGeometry(planewidth, 10);
@@ -243,13 +267,16 @@ window.onload = function() {
       map: texture,
       side: THREE.DoubleSide
     });
-        var libraman = new THREE.TextureLoader().load("textures/Libraman.jpg");
-        libraman.wrapS = THREE.RepeatWrapping;
-        libraman.wrapT = THREE.RepeatWrapping;
-        var material2 = new THREE.MeshBasicMaterial({
-          map: libraman,
-          side: THREE.DoubleSide
-        });
+    /**
+     * image for the poster
+     */
+    var libraman = new THREE.TextureLoader().load("textures/Libraman.jpg");
+    libraman.wrapS = THREE.RepeatWrapping;
+    libraman.wrapT = THREE.RepeatWrapping;
+    var material2 = new THREE.MeshBasicMaterial({
+      map: libraman,
+      side: THREE.DoubleSide
+    });
 
     /**
      * adds 3 planes to the scene
@@ -276,11 +303,12 @@ window.onload = function() {
     plane4.scale.x = -1;
     scene.add(plane4);
 
-
     spawn();
 
     /**
      * adds light to the scene
+     * 2 pointlights to light up the scene and create some shadows
+     * hemispherelight to bring some light to the dark spaces
      */
     const color = 0xffffff;
     const intensity = 1;
@@ -294,11 +322,14 @@ window.onload = function() {
     light2.distance = Infinity;
     light.position.set(20, 25, 0);
     light2.position.set(40, 15, 25);
-    var sphereSize = 1;
-    var pointLightHelper = new THREE.PointLightHelper(light2, sphereSize);
+    /*var sphereSize = 1;
+                    var pointLightHelper = new THREE.PointLightHelper(
+                      light2,
+                      sphereSize
+                    );*/
     var light3 = new THREE.HemisphereLight(color, color, 1);
     scene.add(light3);
-    scene.add(pointLightHelper);
+    //scene.add(pointLightHelper);
     scene.add(light);
     scene.add(light2);
   }
@@ -309,6 +340,10 @@ window.onload = function() {
     renderer.setSize(window.innerWidth, window.innerHeight);
   }
 
+  /**
+   * skybox for the scene, not really fitting, but points are points
+   * if the near or far clips with the skybox, adjust boxbuffergeometry()
+   */
   const bgScene = new THREE.Scene();
   let bgMesh;
   {
@@ -360,7 +395,9 @@ window.onload = function() {
           var y = 0.3; // Y size
           var z = 0.9; // Z size
           var geometry = new THREE.BoxGeometry(x, y, z);
-          var material = new THREE.MeshBasicMaterial({ color: 0x99ff00 });
+          var material = new THREE.MeshBasicMaterial({
+            color: 0x99ff00
+          });
           material.transparent = true;
           material.opacity = 0.2;
           var collisionBox = new THREE.Mesh(geometry, material);
@@ -393,10 +430,6 @@ window.onload = function() {
             }) //BACK
           ];
 
-          /**
-           * adds sound to the robot
-           *
-           */
           var sound = robotSound(camera);
           var material = new THREE.MeshFaceMaterial(cubeMaterials);
           var robot = new THREE.Mesh(geometry, material);
@@ -406,7 +439,6 @@ window.onload = function() {
           var group = new THREE.Group();
           group.add(robot);
           //group.add(collisionBox);
-
           //group.add(rack);
           //group.add(box);
           scene.add(group);
@@ -414,12 +446,18 @@ window.onload = function() {
           document.addEventListener("keydown", onKeyDown, false);
           worldObjects[command.parameters.uuid] = group;
         }
+        /**
+         * when server gives back rack
+         * *sizes in json should be implemented here, still some errors, so coming soon*
+         */
         if (command.parameters.type == "rack") {
           var x = 1.2; // X size
           var y = 5.0; // Y size
           var z = 4.0; // Z size
           var geometry = new THREE.BoxGeometry(x, y, z);
-          var material = new THREE.MeshBasicMaterial({ color: 0x99ff00 });
+          var material = new THREE.MeshBasicMaterial({
+            color: 0x99ff00
+          });
           material.transparent = true;
           material.opacity = 0.2;
           var group = new THREE.Group();
@@ -431,13 +469,19 @@ window.onload = function() {
           scene.add(group);
           worldObjects[command.parameters.uuid] = group;
         }
+        /**
+         * server gives back truck
+         * *sizes in json should be implemented here, still some errors, so coming soon*
+         */
         if (command.parameters.type == "truck") {
           var geometry = new THREE.BoxGeometry(
             command.parameters.sizeX,
             command.parameters.sizeY,
             command.parameters.sizeZ
           );
-          var material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
+          var material = new THREE.MeshBasicMaterial({
+            color: 0x00ff00
+          });
           material.transparent = true;
           material.opacity = 0.2;
           var group = new THREE.Group();
@@ -456,12 +500,18 @@ window.onload = function() {
           scene.add(group);
           worldObjects[command.parameters.uuid] = group;
         }
+         /**
+         * server gives back item
+         * *sizes in json should be implemented here, still some errors, so coming soon*
+         */
         if (command.parameters.type == "item") {
           var x = 1.2; // X size
           var y = 0.75; // Y size
           var z = 0.75; // Z size
           var geometry = new THREE.BoxGeometry(x, y, z);
-          var material = new THREE.MeshBasicMaterial({ color: 0x0080ff });
+          var material = new THREE.MeshBasicMaterial({
+            color: 0x0080ff
+          });
           material.transparent = true;
           material.opacity = 0.9;
           var group = new THREE.Group();
@@ -502,6 +552,9 @@ window.onload = function() {
       object.position.y = command.parameters.y;
       object.position.z = command.parameters.z;
 
+      /**
+       * updates the truck and box position for the animations
+       */
       if (models) {
         for (const model of models) {
           if (model.uuid === command.parameters.uuid) {
@@ -519,6 +572,9 @@ window.onload = function() {
       object.rotation.x = command.parameters.rotationX;
       object.rotation.y = command.parameters.rotationY;
       object.rotation.z = command.parameters.rotationZ;
+      /**
+       * gets the uuid of both robots
+       */
       if (command.parameters.type == "robot") {
         if (counterrobot == 0) {
           robot1 = command.parameters.uuid;
@@ -551,6 +607,7 @@ window.onload = function() {
        * function to move the camera to the robot
        * keycode 49 is 1(not numpad)
        * keycode 50 is 2(still not numpad)
+       * keycode 27 is esc(to escape the screeching from the robot)
        */
 
       function onKeyDown(event) {
@@ -570,7 +627,9 @@ window.onload = function() {
         }
       }
       /**
-       * if toRobot == true, camera moves to robot.
+       * if toRobot == true, camera moves to robot1.
+       * actions come from the server
+       * cameracontrols hardcoded atm, will be changed in the future
        */
       if (toRobot1) {
         if (command.parameters.uuid == robot1) {
@@ -592,6 +651,7 @@ window.onload = function() {
             camera.position.y = object.position.y + 2;
             camera.position.z = object.position.z;
           }
+          //sets the target from orbitcontrol to the robot
           cameraControls.target.set(
             object.position.x,
             object.position.y,
