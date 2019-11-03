@@ -4,7 +4,7 @@ function parseCommand(input = "") {
 
 var socket;
 
-window.onload = function () {
+window.onload = function() {
   var camera, scene, renderer;
   var cameraControls;
   var worldObjects = {};
@@ -16,14 +16,16 @@ window.onload = function () {
   var bottomcornery = -(planeheight / 2 - 1.6) + 2;
   var xracks = Math.floor((planewidth - 2) / 5);
   var zracks = Math.floor((planeheight - 5) / 4);
-  var toRobot;
+  var toRobot1;
+  var toRobot2;
   let models = [];
-  console.log(xracks);
-  console.log(zracks);
+  var robot1;
+  var robot2;
+  var counterrobot = 0;
 
   /**
    * adds sound to the robot
-   * @param {camera thats in the scene} camera 
+   * @param {camera thats in the scene} camera
    * count is there so there is just one instance of the sound
    * Refdistance for volume decrease over distance
    * returns sound to the robot
@@ -34,7 +36,7 @@ window.onload = function () {
     var sound = new THREE.PositionalAudio(listener);
     var audioLoader = new THREE.AudioLoader();
     var count = 0;
-    audioLoader.load("sounds/he.ogg", function (buffer) {
+    audioLoader.load("sounds/untitled.ogg", function(buffer) {
       sound.setBuffer(buffer);
       sound.setRefDistance(0.3);
       sound.setVolume(1); //don't go over a value of 10, just don't do it
@@ -51,7 +53,7 @@ window.onload = function () {
   function rack(x, y, z) {
     loader.load(
       "models/rackding.gltf", //load the model you want to use
-      function (gltf) {
+      function(gltf) {
         gltf.scene.scale.set(0.023, 0.023, 0.023); //if model is to big or too small, change this value
         gltf.scene.position.x = x;
         gltf.scene.position.y = y;
@@ -78,10 +80,10 @@ window.onload = function () {
         gltf.cameras; // Array<THREE.Camera>
         gltf.asset; // Object
       },
-      function (xhr) {
+      function(xhr) {
         //console.log((xhr.loaded / xhr.total) * 100 + "% loaded");
       },
-      function (error) {
+      function(error) {
         //console.log("An error happened");
       }
     );
@@ -90,15 +92,15 @@ window.onload = function () {
   function box(x, y, z, uuid) {
     loader.load(
       "models/doazespiegelt.gltf",
-      function (gltf) {
+      function(gltf) {
         gltf.scene.scale.set(1, 1, 1);
         gltf.scene.position.x = x;
         gltf.scene.position.y = y;
         gltf.scene.position.z = z;
-        const root = gltf.scene
+        const root = gltf.scene;
         root.uuid = uuid;
         root.scale.y = -1;
-        models.push(root.getObjectByName('Scene'));
+        models.push(root.getObjectByName("Scene"));
         scene.add(root);
 
         gltf.animations; // Array<THREE.AnimationClip>
@@ -107,31 +109,30 @@ window.onload = function () {
         gltf.cameras; // Array<THREE.Camera>
         gltf.asset; // Object
       },
-      function (xhr) {
+      function(xhr) {
         //console.log((xhr.loaded / xhr.total) * 100 + "% loaded");
       },
-      function (error) {
+      function(error) {
         //console.log("error");
       }
     );
   }
   function truck(x, y, z, uuid) {
-    loader.load("models/truck.gltf",
-      function (gltf) {
+    loader.load(
+      "models/libratruck.gltf",
+      function(gltf) {
         gltf.scene.scale.set(0.07, 0.07, 0.07);
         gltf.scene.position.x = x;
         gltf.scene.position.y = y;
         gltf.scene.position.z = z;
-        const root = gltf.scene
+        const root = gltf.scene;
         root.uuid = uuid;
-        models.push(root.getObjectByName('Scene'));
+        models.push(root.getObjectByName("Scene"));
         scene.add(root);
       },
-      function (xhr) {
-
-      },
-      function (error) {
-
+      function(xhr) {},
+      function(error) {
+        console.log(error);
       }
     );
   }
@@ -183,6 +184,7 @@ window.onload = function () {
 
     renderer = new THREE.WebGLRenderer({ antialias: true });
     renderer.physicallyCorrectLights = true;
+    renderer.autoClearColor = false;
     renderer.setPixelRatio(window.devicePixelRatio);
     renderer.setSize(window.innerWidth, window.innerHeight + 5);
     document.body.appendChild(renderer.domElement);
@@ -191,12 +193,12 @@ window.onload = function () {
     var geometry = new THREE.PlaneGeometry(planewidth, planeheight);
     var geometry2 = new THREE.PlaneGeometry(planewidth, 10);
     var geometry3 = new THREE.PlaneGeometry(planewidth, 10);
-
+    var geometry4 = new THREE.PlaneGeometry(planewidth - 15, 5);
 
     /**
-    * adds texture to the floor
-    * color, displacement and roughness for the floor
-    */
+     * adds texture to the floor
+     * color, displacement and roughness for the floor
+     */
     var floorMat;
     floorMat = new THREE.MeshStandardMaterial({
       roughness: 0.6,
@@ -206,7 +208,7 @@ window.onload = function () {
       side: THREE.DoubleSide
     });
     var textureLoader = new THREE.TextureLoader();
-    textureLoader.load("textures/Concrete_009_COLOR.jpg", function (map) {
+    textureLoader.load("textures/Concrete_009_COLOR.jpg", function(map) {
       map.wrapS = THREE.RepeatWrapping;
       map.wrapT = THREE.RepeatWrapping;
       map.anisotropy = 4;
@@ -214,7 +216,7 @@ window.onload = function () {
       floorMat.map = map;
       floorMat.needsUpdate = true;
     });
-    textureLoader.load("textures/Concrete_009_DISP.jpg", function (map) {
+    textureLoader.load("textures/Concrete_009_DISP.jpg", function(map) {
       map.wrapS = THREE.RepeatWrapping;
       map.wrapT = THREE.RepeatWrapping;
       map.anisotropy = 4;
@@ -222,7 +224,7 @@ window.onload = function () {
       floorMat.bumpMap = map;
       floorMat.needsUpdate = true;
     });
-    textureLoader.load("textures/Concrete_009_ROUGH.jpg", function (map) {
+    textureLoader.load("textures/Concrete_009_ROUGH.jpg", function(map) {
       map.wrapS = THREE.RepeatWrapping;
       map.wrapT = THREE.RepeatWrapping;
       map.anisotropy = 4;
@@ -241,6 +243,13 @@ window.onload = function () {
       map: texture,
       side: THREE.DoubleSide
     });
+        var libraman = new THREE.TextureLoader().load("textures/Libraman.jpg");
+        libraman.wrapS = THREE.RepeatWrapping;
+        libraman.wrapT = THREE.RepeatWrapping;
+        var material2 = new THREE.MeshBasicMaterial({
+          map: libraman,
+          side: THREE.DoubleSide
+        });
 
     /**
      * adds 3 planes to the scene
@@ -261,9 +270,14 @@ window.onload = function () {
     plane3.position.x = -(planewidth / 2);
     plane3.rotation.y = Math.PI / 2.0;
     scene.add(plane3);
+    var plane4 = new THREE.Mesh(geometry4, material2);
+    plane4.position.z = planewidth / 2 - 0.1;
+    plane4.position.y = planewidth / 6;
+    plane4.scale.x = -1;
+    scene.add(plane4);
+
 
     spawn();
-
 
     /**
      * adds light to the scene
@@ -271,15 +285,22 @@ window.onload = function () {
     const color = 0xffffff;
     const intensity = 1;
     const light = new THREE.PointLight(color, intensity);
-    light.power = 1200;
+    const light2 = new THREE.PointLight(color, intensity);
+    light.power = 600;
+    light2.power = 600;
     light.decay = 1;
+    light2.decay = 1;
     light.distance = Infinity;
+    light2.distance = Infinity;
     light.position.set(20, 25, 0);
-    light.rotation.y = 0;
-    scene.add(light);
+    light2.position.set(40, 15, 25);
     var sphereSize = 1;
-    var pointLightHelper = new THREE.PointLightHelper(light, sphereSize);
+    var pointLightHelper = new THREE.PointLightHelper(light2, sphereSize);
+    var light3 = new THREE.HemisphereLight(color, color, 1);
+    scene.add(light3);
     scene.add(pointLightHelper);
+    scene.add(light);
+    scene.add(light2);
   }
 
   function onWindowResize() {
@@ -288,9 +309,32 @@ window.onload = function () {
     renderer.setSize(window.innerWidth, window.innerHeight);
   }
 
+  const bgScene = new THREE.Scene();
+  let bgMesh;
+  {
+    const loader = new THREE.TextureLoader();
+    const texture = loader.load("textures/de_dust.png");
+    texture.magFilter = THREE.LinearFilter;
+    texture.minFilter = THREE.LinearFilter;
+
+    const shader = THREE.ShaderLib.equirect;
+    const material = new THREE.ShaderMaterial({
+      fragmentShader: shader.fragmentShader,
+      vertexShader: shader.vertexShader,
+      uniforms: shader.uniforms,
+      depthWrite: false,
+      side: THREE.BackSide
+    });
+    material.uniforms.tEquirect.value = texture;
+    const plane = new THREE.BoxBufferGeometry(10, 10, 10);
+    bgMesh = new THREE.Mesh(plane, material);
+    bgScene.add(bgMesh);
+  }
   function animate() {
     requestAnimationFrame(animate);
     cameraControls.update();
+    bgMesh.position.copy(camera.position);
+    renderer.render(bgScene, camera);
     renderer.render(scene, camera);
   }
 
@@ -301,7 +345,7 @@ window.onload = function () {
    */
   //socket = new WebSocket("ws://" + window.location.hostname + ":" + window.location.port + "/connectToSimulation");
   socket = new WebSocket("ws://localhost:8080" + "/connectToSimulation");
-  socket.onmessage = function (event) {
+  socket.onmessage = function(event) {
     //Hier wordt het commando dat vanuit de server wordt gegeven uit elkaar gehaald
     var command = parseCommand(event.data);
 
@@ -319,20 +363,20 @@ window.onload = function () {
           var material = new THREE.MeshBasicMaterial({ color: 0x99ff00 });
           material.transparent = true;
           material.opacity = 0.2;
-          var collisionBox = new THREE.Mesh(geometry, material)
+          var collisionBox = new THREE.Mesh(geometry, material);
 
           var geometry = new THREE.BoxGeometry(0.9, 0.3, 0.9);
           var cubeMaterials = [
             new THREE.MeshBasicMaterial({
-              map: new THREE.TextureLoader().load("textures/robot_side.png"),
+              map: new THREE.TextureLoader().load("textures/robot_side_1.png"),
               side: THREE.DoubleSide
             }), //LEFT
             new THREE.MeshBasicMaterial({
-              map: new THREE.TextureLoader().load("textures/robot_side.png"),
+              map: new THREE.TextureLoader().load("textures/robot_side_1.png"),
               side: THREE.DoubleSide
             }), //RIGHT
             new THREE.MeshBasicMaterial({
-              map: new THREE.TextureLoader().load("textures/robot_top.png"),
+              map: new THREE.TextureLoader().load("textures/robot_top_1.png"),
               side: THREE.DoubleSide
             }), //TOP
             new THREE.MeshBasicMaterial({
@@ -340,25 +384,24 @@ window.onload = function () {
               side: THREE.DoubleSide
             }), //BOTTOM
             new THREE.MeshBasicMaterial({
-              map: new THREE.TextureLoader().load("textures/robot_front.png"),
+              map: new THREE.TextureLoader().load("textures/robot_front_1.png"),
               side: THREE.DoubleSide
             }), //FRONT
             new THREE.MeshBasicMaterial({
-              map: new THREE.TextureLoader().load("textures/robot_front.png"),
+              map: new THREE.TextureLoader().load("textures/robot_front_1.png"),
               side: THREE.DoubleSide
             }) //BACK
           ];
 
           /**
            * adds sound to the robot
-           * 
+           *
            */
           var sound = robotSound(camera);
           var material = new THREE.MeshFaceMaterial(cubeMaterials);
           var robot = new THREE.Mesh(geometry, material);
           robot.position.y = 0.15;
           robot.add(sound);
-
 
           var group = new THREE.Group();
           group.add(robot);
@@ -370,8 +413,6 @@ window.onload = function () {
 
           document.addEventListener("keydown", onKeyDown, false);
           worldObjects[command.parameters.uuid] = group;
-
-
         }
         if (command.parameters.type == "rack") {
           var x = 1.2; // X size
@@ -383,16 +424,19 @@ window.onload = function () {
           material.opacity = 0.2;
           var group = new THREE.Group();
 
-          var rack = new THREE.Mesh(geometry, material);
-          rack.position.y = y / 2;
-          group.add(rack);
+          var collisionBox = new THREE.Mesh(geometry, material);
+          collisionBox.position.y = y / 2;
+          //group.add(collisionBox);
 
           scene.add(group);
           worldObjects[command.parameters.uuid] = group;
         }
         if (command.parameters.type == "truck") {
-          var sizeX = 8.7; var sizeY = 5.0; var sizeZ = 3.5;
-          var geometry = new THREE.BoxGeometry(sizeX, sizeY, sizeZ);
+          var geometry = new THREE.BoxGeometry(
+            command.parameters.sizeX,
+            command.parameters.sizeY,
+            command.parameters.sizeZ
+          );
           var material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
           material.transparent = true;
           material.opacity = 0.2;
@@ -400,9 +444,14 @@ window.onload = function () {
           group.name = "truck";
 
           var collisionBox = new THREE.Mesh(geometry, material);
-          collisionBox.position.y = sizeY / 2;
-          truck(command.parameters.x, command.parameters.y, command.parameters.z, command.parameters.uuid);
-          group.add(collisionBox);
+          collisionBox.position.y = command.parameters.sizeY / 2;
+          truck(
+            command.parameters.x,
+            command.parameters.y,
+            command.parameters.z,
+            command.parameters.uuid
+          );
+          //group.add(collisionBox);
 
           scene.add(group);
           worldObjects[command.parameters.uuid] = group;
@@ -418,9 +467,14 @@ window.onload = function () {
           var group = new THREE.Group();
 
           var item = new THREE.Mesh(geometry, material);
-          group.add(item);
+          //group.add(item);
 
-          box(command.parameters.x, command.parameters.y, (command.parameters.z - z / 2), command.parameters.uuid);
+          box(
+            command.parameters.x,
+            command.parameters.y,
+            command.parameters.z - z / 2,
+            command.parameters.uuid
+          );
           item.position.y = y / 2;
 
           scene.add(group);
@@ -465,10 +519,22 @@ window.onload = function () {
       object.rotation.x = command.parameters.rotationX;
       object.rotation.y = command.parameters.rotationY;
       object.rotation.z = command.parameters.rotationZ;
-
+      if (command.parameters.type == "robot") {
+        if (counterrobot == 0) {
+          robot1 = command.parameters.uuid;
+          counterrobot++;
+        } else if (counterrobot == 1) {
+          robot2 = command.parameters.uuid;
+          counterrobot++;
+        }
+      }
 
       // If the positions of an object equal the positions defined in World.java (dump[])
-      if (object.position.x == -1000 && object.position.y == -1000 && object.position.z == -1000) {
+      if (
+        object.position.x == -1000 &&
+        object.position.y == -1000 &&
+        object.position.z == -1000
+      ) {
         // Delete Object
         scene.remove(object);
         if (models) {
@@ -483,35 +549,82 @@ window.onload = function () {
 
       /**
        * function to move the camera to the robot
-       * keycode 32 is space
-       * keycode 27 is escape
+       * keycode 49 is 1(not numpad)
+       * keycode 50 is 2(still not numpad)
        */
 
       function onKeyDown(event) {
         var keyCode = event.which;
-        if (keyCode == "32") {
-          toRobot = true;
-
-
-
+        if (keyCode == "49") {
+          toRobot1 = true;
+          toRobot2 = false;
+        } else if (keyCode == "50") {
+          toRobot2 = true;
+          toRobot1 = false;
         } else if (keyCode == "27") {
-          toRobot = false;
+          toRobot1 = false;
+          toRobot2 = false;
+          camera.position.z = -15;
+          camera.position.y = 5;
+          camera.position.x = 25;
         }
       }
       /**
        * if toRobot == true, camera moves to robot.
        */
-      if (toRobot == true) {
-        if (command.parameters.type == "robot") {
-          camera.position.x = object.position.x;
-          camera.position.y = object.position.y + 2;
-          camera.position.z = object.position.z - 2;
-          camera.rotation
-          cameraControls.center.set(object.position.x, object.position.y, object.position.z);
-
+      if (toRobot1) {
+        if (command.parameters.uuid == robot1) {
+          console.log(command.parameters.action);
+          if (command.parameters.action == "z-") {
+            camera.position.x = object.position.x;
+            camera.position.y = object.position.y + 2;
+            camera.position.z = object.position.z + 2;
+          } else if (command.parameters.action == "z+") {
+            camera.position.x = object.position.x;
+            camera.position.y = object.position.y + 2;
+            camera.position.z = object.position.z - 2;
+          } else if (command.parameters.action == "x-") {
+            camera.position.x = object.position.x + 2;
+            camera.position.y = object.position.y + 2;
+            camera.position.z = object.position.z;
+          } else if (command.parameters.action == "x+") {
+            camera.position.x = object.position.x - 2;
+            camera.position.y = object.position.y + 2;
+            camera.position.z = object.position.z;
+          }
+          cameraControls.target.set(
+            object.position.x,
+            object.position.y,
+            object.position.z
+          );
         }
-
-
+      }
+      if (toRobot2) {
+        if (command.parameters.uuid == robot2) {
+          console.log(command.parameters.action);
+          if (command.parameters.action == "z-") {
+            camera.position.x = object.position.x;
+            camera.position.y = object.position.y + 2;
+            camera.position.z = object.position.z + 2;
+          } else if (command.parameters.action == "z+") {
+            camera.position.x = object.position.x;
+            camera.position.y = object.position.y + 2;
+            camera.position.z = object.position.z - 2;
+          } else if (command.parameters.action == "x-") {
+            camera.position.x = object.position.x + 2;
+            camera.position.y = object.position.y + 2;
+            camera.position.z = object.position.z;
+          } else if (command.parameters.action == "x+") {
+            camera.position.x = object.position.x - 2;
+            camera.position.y = object.position.y + 2;
+            camera.position.z = object.position.z;
+          }
+          cameraControls.target.set(
+            object.position.x,
+            object.position.y,
+            object.position.z
+          );
+        }
       }
     }
   };
