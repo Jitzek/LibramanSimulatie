@@ -866,7 +866,7 @@ class Robot extends Obstacle implements Object3D, Updatable {
                 if (robotCollision()) {
                     return false;
                 }
-                else {
+                else if (!finalPath.isEmpty()) {
                     isStationary = false;
                     switch (finalPath.get(pathProgress)) {
                     case "x+":
@@ -1164,7 +1164,7 @@ class Robot extends Obstacle implements Object3D, Updatable {
         // Decides the distance the other Robot (Collision Robot) should be from this Robot before continueing it's path
         // Setting it close to zero (not negative) decreases this distance (not advised)
         // This configuration setting will only be set in effect when the reaction if this Robot is "wait"
-        double robot_wait_distance_config = 1.0;
+        double robot_wait_distance_config = 1.2;
 
         /* -------------------- */
 
@@ -1238,7 +1238,6 @@ class Robot extends Obstacle implements Object3D, Updatable {
                             robot.setCollisionPreventionAction("");
                             return true;
                         }
-                        hasCollision = true;
                     }
                     switch (action) {
                         case "x+":
@@ -1305,8 +1304,14 @@ class Robot extends Obstacle implements Object3D, Updatable {
                                 }
                                 // Other Robot is crossing this Robot's path 
                                 else if (robot.getAction().equals("z+") || robot.getAction().equals("z-")) {
-                                    this.reaction = "wait";
-                                    robot.setCollisionPreventionAction("continue");
+                                    if (collisionClass.collisionDetection(this.getX(), this.getY(), this.getZ(), this.getSizeX(), this.getSizeY(), this.getSizeZ(),
+                                                                robotCoordinates, robotSize)) {
+                                        this.reaction = "continue";
+                                        robot.setCollisionPreventionAction("wait");
+                                    } else {
+                                        this.reaction = "wait";
+                                        robot.setCollisionPreventionAction("rebuild");
+                                    }
                                 }
                                 else {
                                     setCollisionPreventionAction("rebuild");
@@ -1378,8 +1383,14 @@ class Robot extends Obstacle implements Object3D, Updatable {
                                 }
                                 // Other Robot is crossing this Robot's path
                                 else if (robot.getAction().equals("z+") || robot.getAction().equals("z-")) {
-                                    this.reaction = "wait";
-                                    robot.setCollisionPreventionAction("continue");
+                                    if (collisionClass.collisionDetection(this.getX(), this.getY(), this.getZ(), this.getSizeX(), this.getSizeY(), this.getSizeZ(),
+                                                                robotCoordinates, robotSize)) {
+                                        this.reaction = "continue";
+                                        robot.setCollisionPreventionAction("wait");
+                                    } else {
+                                        this.reaction = "wait";
+                                        robot.setCollisionPreventionAction("rebuild");
+                                    }
                                 }
                                 else {
                                     setCollisionPreventionAction("rebuild");
@@ -1396,8 +1407,14 @@ class Robot extends Obstacle implements Object3D, Updatable {
                                 robot.setCollisionRobot(this);
                                 // Other Robot is crossing this Robot's path
                                 if (robot.getAction().equals("x+") || (robot.getAction().equals("x-"))) {
-                                    this.reaction = "wait";
-                                    robot.setCollisionPreventionAction("continue");
+                                    if (collisionClass.collisionDetection(this.getX(), this.getY(), this.getZ(), this.getSizeX(), this.getSizeY(), this.getSizeZ(),
+                                                                robotCoordinates, robotSize)) {
+                                        this.reaction = "continue";
+                                        robot.setCollisionPreventionAction("wait");
+                                    } else {
+                                        this.reaction = "wait";
+                                        robot.setCollisionPreventionAction("rebuild");
+                                    }
                                 }
                                 // Other Robot is going same way
                                 else if (robot.getAction().equals("z+")) {
@@ -1468,8 +1485,17 @@ class Robot extends Obstacle implements Object3D, Updatable {
                                 robot.setCollisionRobot(this);
                                 // Other Robot is crossing this Robot's path
                                 if (robot.getAction().equals("x+") || (robot.getAction().equals("x-"))) {
-                                    this.reaction = "wait";
-                                    robot.setCollisionPreventionAction("continue");
+                                    if (collisionClass.collisionDetection(this.getX(), this.getY(), this.getZ(), this.getSizeX(), this.getSizeY(), this.getSizeZ(),
+                                                                robotCoordinates, robotSize)) {
+                                        if (!goIdle) {
+                                            this.reaction = "continue";
+                                            robot.setCollisionPreventionAction("wait");
+                                        }
+                                        
+                                    } else {
+                                        this.reaction = "wait";
+                                        robot.setCollisionPreventionAction("rebuild");
+                                    }
                                 }
                                 // Other Robot is coming head on
                                 else if (robot.getAction().equals("z+")) {
@@ -1534,7 +1560,7 @@ class Robot extends Obstacle implements Object3D, Updatable {
                             }
                             break;
                     }
-                    hasCollision = false;
+                    //hasCollision = false;
                 }
             }
         } 
@@ -1857,7 +1883,7 @@ class Robot extends Obstacle implements Object3D, Updatable {
                             }
                             
                         }
-                        getCollisionRobot().setCollisionPreventionAction("");
+                        getCollisionRobot().setCollisionPreventionAction("wait");
                         //getCollisionRobot().setCollisionRobot(null);
                     }
                     else {
@@ -1961,7 +1987,7 @@ class Robot extends Obstacle implements Object3D, Updatable {
                                 break;
                             }
                         }
-                        getCollisionRobot().setCollisionPreventionAction("");
+                        getCollisionRobot().setCollisionPreventionAction("wait");
                     }
                     this.reaction = "";
                     return true;
