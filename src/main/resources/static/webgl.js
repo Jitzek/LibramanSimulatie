@@ -195,7 +195,7 @@ window.onload = function() {
                              {
                                const loader = new THREE.TextureLoader();
                                const texture = loader.load(
-                                 "textures/de_dust.png"
+                                 "textures/dust2.png"
                                );
                                texture.magFilter = THREE.LinearFilter;
                                texture.minFilter = THREE.LinearFilter;
