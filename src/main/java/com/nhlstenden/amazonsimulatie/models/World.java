@@ -236,7 +236,6 @@ public class World implements Model {
                             }
                             if (!exists) {
                                 this.truck.addRequiredItem(item);
-                                this.worldObjects.add(item);
                                 break;
                             }
                             
