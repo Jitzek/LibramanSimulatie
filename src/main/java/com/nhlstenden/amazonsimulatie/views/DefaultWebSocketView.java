@@ -1,6 +1,8 @@
 package com.nhlstenden.amazonsimulatie.views;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 import com.nhlstenden.amazonsimulatie.base.Command;
 import com.nhlstenden.amazonsimulatie.models.Object3D;
@@ -19,6 +21,11 @@ import org.springframework.web.socket.WebSocketSession;
 public class DefaultWebSocketView implements View {
     private WebSocketSession session;
     private Command onClose;
+    private String action;
+
+    private List<String> robotuuids = new ArrayList<>();
+    private List<double[]> robotxz = new ArrayList<>();
+    private List<double[]> oldrobotxz = new ArrayList<>();
 
     public DefaultWebSocketView(WebSocketSession session) {
         this.session = session;
@@ -34,6 +41,43 @@ public class DefaultWebSocketView implements View {
     public void update(String event, Object3D data) {
         synchronized (session) {
             try {
+
+                if (data.getType().toString().trim().equals("robot")) {
+                    if (!robotuuids.contains(data.getUUID())) {
+                        robotuuids.add(data.getUUID());
+                        robotxz.add(new double[] { data.getX(), data.getZ() });
+                        oldrobotxz.add(new double[] { data.getX(), data.getZ() });
+                    }
+                    int index = 0;
+                    for (String uuid : robotuuids) {
+                        if (data.getUUID().equals(uuid)) {
+                            robotxz.get(index)[0] = data.getX();
+                            robotxz.get(index)[1] = data.getZ();
+                            double positionx = robotxz.get(index)[0];
+                            double oldpositionx = oldrobotxz.get(index)[0];
+                            double positionz = robotxz.get(index)[1];
+                            double oldpositionz = oldrobotxz.get(index)[1];
+                            if ((positionx - oldpositionx) < 0.0) {
+                                action = "x-";
+                                oldpositionx = positionx;
+                            } else if ((positionx - oldpositionx) > 0.0) {
+                                action = "x+";
+                                oldpositionx = positionx;
+                            } else if ((positionz - oldpositionz) < 0.0) {
+                                action = "z-";
+                                oldpositionz = positionz;
+                            } else if ((positionz - oldpositionz) > 0.0) {
+                                action = "z+";
+                                oldpositionz = positionz;
+                            }
+                            oldrobotxz.get(index)[0] = positionx;
+                            oldrobotxz.get(index)[1] = positionz;
+                            break;
+                        }
+                        index++;
+                    }
+
+                }
                 if (this.session.isOpen()) {
                     this.session
                             .sendMessage(new TextMessage("{" + surroundString("command") + ": " + surroundString(event)
@@ -58,11 +102,23 @@ public class DefaultWebSocketView implements View {
      * worden naar de client.
      */
     private String jsonifyObject3D(Object3D object) {
+        if (object.getType().toString().trim().equals("robot")) {
+            return "{" + surroundString("uuid") + ":" + surroundString(object.getUUID()) + "," + surroundString("type")
+                    + ":" + surroundString(object.getType()) + "," + surroundString("x") + ":" + object.getX() + ","
+                    + surroundString("y") + ":" + object.getY() + "," + surroundString("z") + ":" + object.getZ() + ","
+                    + surroundString("rotationX") + ":" + object.getRotationX() + "," + surroundString("rotationY")
+                    + ":" + object.getRotationY() + "," + surroundString("rotationZ") + ":" + object.getRotationZ()
+                    + "," + surroundString("sizeX") + ":" + object.getSizeX() + "," + surroundString("sizeY") + ":"
+                    + object.getSizeY() + "," + surroundString("sizeZ") + ":" + object.getSizeZ() + ","
+                    + surroundString("action") + ":" + surroundString(action) + "}";
+        }
         return "{" + surroundString("uuid") + ":" + surroundString(object.getUUID()) + "," + surroundString("type")
                 + ":" + surroundString(object.getType()) + "," + surroundString("x") + ":" + object.getX() + ","
                 + surroundString("y") + ":" + object.getY() + "," + surroundString("z") + ":" + object.getZ() + ","
                 + surroundString("rotationX") + ":" + object.getRotationX() + "," + surroundString("rotationY") + ":"
-                + object.getRotationY() + "," + surroundString("rotationZ") + ":" + object.getRotationZ() + "}";
+                + object.getRotationY() + "," + surroundString("rotationZ") + ":" + object.getRotationZ() + ","
+                + surroundString("sizeX") + ":" + object.getSizeX() + "," + surroundString("sizeY") + ":"
+                + object.getSizeY() + "," + surroundString("sizeZ") + ":" + object.getSizeZ() + "}";
     }
 
     private String surroundString(String s) {
