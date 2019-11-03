@@ -23,7 +23,8 @@ class Robot extends Obstacle implements Object3D, Updatable {
 
     private Robot collisionRobot;
 
-    private static double speed = 0.05;
+    // The change in coordinates the Robot would take when updating it's path
+    private static double speed = 0.055;
 
     private String reaction = "";
 
@@ -1147,9 +1148,26 @@ class Robot extends Obstacle implements Object3D, Updatable {
      * "wait" - Robot won't update it's path
      * "rebuild" - Robot will rebuild it's path according to the colliding's Robot's position and size
      * "continue" - Robot will continue it's path regardless of possible collisions (use with caution)
+     * 
+     * This Method is configurable
+     * 
      * @return - True if there is a collision - False if there is no collision
      */
     private boolean robotCollision() {
+        /* Misc Configuration Section */     // Expansion Suggestions: -Make configuration file   -Make error log (when robots collide)
+
+        // Decides the distance the Robots should keep from eachother
+        // The closer to zero (not negative) would allow the Robots to drive closer to eachother but could increase the chance of collisions happening
+        // Lower this when a Robot is struggling with tights spaces when trying to navigate around other Robots
+        double robot_main_distance_config = 0.6;
+
+        // Decides the distance the other Robot (Collision Robot) should be from this Robot before continueing it's path
+        // Setting it close to zero (not negative) decreases this distance (not advised)
+        // This configuration setting will only be set in effect when the reaction if this Robot is "wait"
+        double robot_wait_distance_config = 1.0;
+
+        /* -------------------- */
+
         boolean hasCollision = false;
 
         // Get the last action taken by the Robot
@@ -1174,12 +1192,11 @@ class Robot extends Obstacle implements Object3D, Updatable {
                 if (robot != this) {
                     // Config decides the distance the Robots should keep from eachother
                     // The closer to zero (not negative) would allow the Robots to drive closer to eachother but could increase the chance of collisions happening
-                    double config = 0.9;
 
                     double[] thisCoordinates = new double[]{this.getX(), this.getY(), this.getZ()};
-                    double[] thisSize = new double[]{this.getSizeX() + config, this.getSizeY() + config, this.getSizeZ() + config};
+                    double[] thisSize = new double[]{this.getSizeX() + robot_main_distance_config, this.getSizeY() + robot_main_distance_config, this.getSizeZ() + robot_main_distance_config};
                     double[] robotCoordinates = new double[]{robot.getX(), robot.getY(), robot.getZ()};
-                    double[] robotSize = new double[]{robot.getSizeX() + config, robot.getSizeY() + config, robot.getSizeZ() + config};
+                    double[] robotSize = new double[]{robot.getSizeX() + robot_main_distance_config, robot.getSizeY() + robot_main_distance_config, robot.getSizeZ() + robot_main_distance_config};
 
 
                     if (collisionClass.collisionDetection(getX() + speed, getY(), getZ(), 
@@ -1529,10 +1546,6 @@ class Robot extends Obstacle implements Object3D, Updatable {
                     getCollisionRobot().setCollisionPreventionAction("wait");
                     return false;
                 case "wait":
-                    // Config decides the distance the other Robot should be from this Robot before continueing it's path
-                    // Setting it close to zero (not negative) decreases the distance (not advised)
-                    double config = 1.2;
-
                     if (this.isStationary()) {
                         return true;
                     }
@@ -1545,29 +1558,33 @@ class Robot extends Obstacle implements Object3D, Updatable {
                     else if (getCollisionRobot() != this) {
                         // Checks if there's still a collision
                         double[] robotCoordinates = new double[]{getCollisionRobot().getX(), getCollisionRobot().getY(), getCollisionRobot().getZ()};
-                        double[] robotSize = new double[]{getCollisionRobot().getSizeX() + config, getCollisionRobot().getSizeY() + config, getCollisionRobot().getSizeZ() + config};
+                        double[] robotSize = new double[]{getCollisionRobot().getSizeX() + robot_wait_distance_config, getCollisionRobot().getSizeY() + robot_wait_distance_config, getCollisionRobot().getSizeZ() + robot_wait_distance_config};
                         boolean collision = false;
                         switch (action) {
                             case "x+":
-                                if (collisionClass.collisionDetection(this.getX() + speed, this.getY(), this.getZ(), this.getSizeX() + config, this.getSizeY() + config, this.getSizeZ() + config, 
+                                if (collisionClass.collisionDetection(this.getX() + speed, this.getY(), this.getZ(), 
+                                                    this.getSizeX() + robot_wait_distance_config, this.getSizeY() + robot_wait_distance_config, this.getSizeZ() + robot_wait_distance_config, 
                                                     robotCoordinates, robotSize)) {
                                         collision = true;
                                     }
                                 break;
                             case "x-":
-                                if (collisionClass.collisionDetection(this.getX() - speed, this.getY(), this.getZ(), this.getSizeX() + config, this.getSizeY() + config, this.getSizeZ() + config, 
+                                if (collisionClass.collisionDetection(this.getX() - speed, this.getY(), this.getZ(), 
+                                                    this.getSizeX() + robot_wait_distance_config, this.getSizeY() + robot_wait_distance_config, this.getSizeZ() + robot_wait_distance_config, 
                                                     robotCoordinates, robotSize)) {
                                         collision = true;
                                     }
                                 break;
                             case "z+":
-                                if (collisionClass.collisionDetection(getX(), getY(), getZ() + speed, this.getSizeX() + config, this.getSizeY() + config, this.getSizeZ() + config, 
+                                if (collisionClass.collisionDetection(getX(), getY(), getZ() + speed, 
+                                                    this.getSizeX() + robot_wait_distance_config, this.getSizeY() + robot_wait_distance_config, this.getSizeZ() + robot_wait_distance_config, 
                                                     robotCoordinates, robotSize)) {
                                         collision = true;
                                     }
                                 break;
                             case "z-":
-                                if (collisionClass.collisionDetection(getX(), getY(), getZ() - speed, this.getSizeX() + config, this.getSizeY() + config, this.getSizeZ() + config, 
+                                if (collisionClass.collisionDetection(getX(), getY(), getZ() - speed, 
+                                                    this.getSizeX() + robot_wait_distance_config, this.getSizeY() + robot_wait_distance_config, this.getSizeZ() + robot_wait_distance_config, 
                                                     robotCoordinates, robotSize)) {
                                         collision = true;
                                     }

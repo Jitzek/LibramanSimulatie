@@ -88,10 +88,9 @@ public class PathFinding {
 
         String prevAction = "";
         boolean finishedCalc = false;
-        int count = 0;
         boolean reachedDestination = false;
         while (!finishedCalc) {
-            // Overflow prevention
+            // Overflow prevention, Increase this when map size is increased!
             if (currentPath.size() >= 1500) {
                 return;
             }
@@ -591,14 +590,10 @@ public class PathFinding {
                 }
             }
             if (reachedDestination) {
-                //System.out.println("finished");
                 currentPath.add("finish");
                 allPaths.add(currentPath);
-                //System.out.println(allPaths.size());
                 finishedCalc = true;
             }
-            //System.out.println(count + " " + currentPath.get(count));
-            count++;
         }
         return;
     }
